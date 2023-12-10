@@ -1,101 +1,41 @@
-/* =============================================================
- * SmallSQL : a free Java DBMS library for the Java(tm) platform
- * =============================================================
- *
- * (C) Copyright 2004-2007, by Volker Berlin.
- *
- * Project Info:  http://www.smallsql.de/
- *
- * This library is free software; you can redistribute it and/or modify it 
- * under the terms of the GNU Lesser General Public License as published by 
- * the Free Software Foundation; either version 2.1 of the License, or 
- * (at your option) any later version.
- *
- * This library is distributed in the hope that it will be useful, but 
- * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY 
- * or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public 
- * License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public
- * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, 
- * USA.  
- *
- * [Java is a trademark or registered trademark of Sun Microsystems, Inc. 
- * in the United States and other countries.]
- *
- * ---------------
- * ExpressionFunctionConvert.java
- * ---------------
- * Author: Volker Berlin
- * 
- * Created on 29.04.2004
- */
 package smallsql.database;
-
 import java.util.Arrays;
 import smallsql.database.language.Language;
-
-/**
- * @author Volker Berlin
- */
 public class ExpressionFunctionConvert extends ExpressionFunction {
-
 	final private Column datatype;
-	
 	public ExpressionFunctionConvert(Column datatype, Expression value, Expression style) {
 		super();
 		this.datatype = datatype;
 		Expression[] params = (style == null) ? new Expression[]{value} : new Expression[]{value, style};
 		setParams( params );
 	}
-	
-
 	int getFunction() {
 		return SQLTokenizer.CONVERT;
 	}
-	
-
 	boolean isNull() throws Exception {
 		return param1.isNull();
 	}
-
-
 	boolean getBoolean() throws Exception {
 		return ExpressionValue.getBoolean( getObject(), getDataType() );
 	}
-
-	
 	int getInt() throws Exception {
 		return ExpressionValue.getInt( getObject(), getDataType() );
 	}
-
-
 	long getLong() throws Exception {
 		return ExpressionValue.getLong( getObject(), getDataType() );
 	}
-
-
 	float getFloat() throws Exception {
 		return ExpressionValue.getFloat( getObject(), getDataType() );
 	}
-
-
 	double getDouble() throws Exception {
 		return ExpressionValue.getDouble( getObject(), getDataType() );
 	}
-
-
 	long getMoney() throws Exception {
 		return ExpressionValue.getMoney(getObject(), getDataType());
 	}
-	
-
 	MutableNumeric getNumeric() throws Exception {
 		return ExpressionValue.getNumeric(getObject(), getDataType());
 	}
-
-
 	String getString() throws Exception {
 		Object obj = getObject();
 		if(obj == null) return null;
@@ -109,8 +49,6 @@ public class ExpressionFunctionConvert extends ExpressionFunction {
 		}
 		return obj.toString();
 	}
-
-	
 	Object getObject() throws Exception {
 		if(param1.isNull()) return null;
 		final int dataType = getDataType();
@@ -145,7 +83,6 @@ public class ExpressionFunctionConvert extends ExpressionFunction {
 					return buffer;
 				}
 				return bytes;
-				
 			}
 			case SQLTokenizer.BINARY:{
 				byte[] bytes = param1.getBytes();
@@ -156,7 +93,6 @@ public class ExpressionFunctionConvert extends ExpressionFunction {
 					return buffer;
 				}
 				return bytes;
-				
 			}
 			case SQLTokenizer.BOOLEAN:
 			case SQLTokenizer.BIT:
@@ -201,8 +137,6 @@ public class ExpressionFunctionConvert extends ExpressionFunction {
 		Object[] param = { SQLTokenizer.getKeyWord(dataType) };
 		throw SmallSQLException.create(Language.UNSUPPORTED_TYPE_CONV, param);
 	}
-	
-	
 	final private String convertToString() throws Exception{
 		if(param2 != null){
 			int type = param1.getDataType();
@@ -216,30 +150,21 @@ public class ExpressionFunctionConvert extends ExpressionFunction {
 				default:
 					return param1.getString();
 			}
-			//TODO Format for MONEY, REAL and DOUBLE
 		}else
 			return param1.getString();
 	}
-	
-	
 	final private long getDateTimeLong() throws Exception{
-		//try{
 			switch(param1.getDataType()){
 				case SQLTokenizer.LONGVARCHAR:
 				case SQLTokenizer.VARCHAR:
 				case SQLTokenizer.CHAR:
 					return DateTime.parse( param1.getString() );
 			}
-		//}catch(Exception e){/* do nothing */}
 		return param1.getLong();
 	}
-
-
 	final int getDataType() {
 		return datatype.getDataType();
 	}
-	
-	
 	final int getPrecision(){
 		final int dataType = getDataType();
 		switch(dataType){
@@ -254,11 +179,7 @@ public class ExpressionFunctionConvert extends ExpressionFunction {
 				return super.getPrecision();
 		}
 	}
-
-	
 	final int getScale() {
 		return datatype.getScale();
 	}
-	
-
 }

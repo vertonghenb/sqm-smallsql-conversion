@@ -1,48 +1,12 @@
-/* =============================================================
- * SmallSQL : a free Java DBMS library for the Java(tm) platform
- * =============================================================
- *
- * (C) Copyright 2004-2007, by Volker Berlin.
- *
- * Project Info:  http://www.smallsql.de/
- *
- * This library is free software; you can redistribute it and/or modify it 
- * under the terms of the GNU Lesser General Public License as published by 
- * the Free Software Foundation; either version 2.1 of the License, or 
- * (at your option) any later version.
- *
- * This library is distributed in the hope that it will be useful, but 
- * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY 
- * or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public 
- * License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public
- * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, 
- * USA.  
- *
- * [Java is a trademark or registered trademark of Sun Microsystems, Inc. 
- * in the United States and other countries.]
- *
- * ---------------
- * SQLParser.java
- * ---------------
- * Author: Volker Berlin
- * 
- */
 package smallsql.database;
-
 import java.util.List;
 import java.sql.*;
 import smallsql.database.language.Language;
-
 final class SQLParser {
-
 	SSConnection con;
 	private char[] sql;
     private List tokens;
     private int tokenIdx;
-
     Command parse(SSConnection con, String sqlString) throws SQLException{
     	this.con = con;
         Command cmd = parse( sqlString.toCharArray() );
@@ -52,12 +16,10 @@ final class SQLParser {
         }
         return cmd;
     }
-    
     final private Command parse(char[] sql) throws SQLException{
         this.sql = sql;
         this.tokens = SQLTokenizer.parseSQL( sql );
         tokenIdx = 0;
-
         SQLToken token = nextToken(COMMANDS);
         switch (token.value){
             case SQLTokenizer.SELECT:
@@ -91,61 +53,25 @@ final class SQLParser {
                     throw new Error();
         }
     }
-    
-    
     Expression parseExpression(String expr) throws SQLException{
 		this.sql = expr.toCharArray();
 		this.tokens = SQLTokenizer.parseSQL( sql );
 		tokenIdx = 0;
     	return expression( null, 0);
     }
-
-    /**
-	 * Create a syntax error message, using a custom message.
-	 * 
-	 * @param token
-	 *            token object; if not null, generates a SYNTAX_BASE_OFS,
-	 *            otherwise a SYNTAX_BASE_END.
-	 * @param addMessage
-	 *            additional message object to append.
-	 */
     private SQLException createSyntaxError(SQLToken token, String addMessageCode) {
     	String message = getErrorString(token, addMessageCode, null);
     	return SmallSQLException.create(Language.CUSTOM_MESSAGE, message);
     }
-    
-    /**
-	 * Create a syntax error message, using a message with a parameter.
-	 * 
-	 * @param token
-	 *            token object; if not null, generates a SYNTAX_BASE_OFS,
-	 *            otherwise a SYNTAX_BASE_END.
-	 * @param addMessageCode
-	 *            additional message[Code] to append.
-	 * @param param0
-	 *            parameter.
-	 */
     private SQLException createSyntaxError(SQLToken token, String addMessageCode, 
     		Object param0) {
     	String message = getErrorString(token, addMessageCode, param0);
     	return SmallSQLException.create(Language.CUSTOM_MESSAGE, message);
     }
-    
-    /**
-	 * Create an "Additional keyword required" syntax error.
-	 * 
-	 * @param token
-	 *            token object.
-	 * @param validValues
-	 *            valid values.
-	 * @return Exception.
-	 */
     private SQLException createSyntaxError(SQLToken token, int[] validValues){
     	String msgStr = SmallSQLException.translateMsg(
     			Language.STXADD_KEYS_REQUIRED, new Object[] { });
-    	
     	StringBuffer msgBuf = new StringBuffer( msgStr );
-
         for(int i=0; i<validValues.length; i++){
             String name = SQLTokenizer.getKeyWord(validValues[i]);
             if(name == null) name = String.valueOf( (char)validValues[i] );
@@ -156,29 +82,13 @@ final class SQLParser {
             if ( i == validValues.length - 2 )
                 msgBuf.append( " or ");
         }
-
     	String message = getErrorString(
     			token, Language.CUSTOM_MESSAGE, msgBuf);
     	return SmallSQLException.create(Language.CUSTOM_MESSAGE, message);
     }
-
-    /**
-	 * Create the complete error string (begin + middle + end).
-	 * 
-	 * @param token
-	 *            token object.
-	 * @param middleMsgCode
-	 *            middle message[code].
-	 * @param middleMsgParam
-	 *            middle message[code] parameter.
-	 * @return complete error message string.
-	 */
     private String getErrorString(SQLToken token, String middleMsgCode, 
     		Object middleMsgParam) {
     	StringBuffer buffer = new StringBuffer(1024);
-
-    	/* begin */
-    	
         if(token != null){
         	Object[] params = { String.valueOf(token.offset),
         						String.valueOf(sql, token.offset, token.length) };
@@ -190,16 +100,9 @@ final class SQLParser {
         			Language.SYNTAX_BASE_END, new Object[] { });
         	buffer.append(begin);
         }
-    	
-    	/* middle */
-    	
     	String middle = SmallSQLException.translateMsg(
     			middleMsgCode, new Object[] { middleMsgParam });
-    	
     	buffer.append(middle);
-    	
-    	/* end */
-    	
         int valOffset = (token != null) ? token.offset : sql.length;
         int valBegin = Math.max( 0, valOffset-40);
         int valEnd   = Math.min( valOffset+20, sql.length );
@@ -209,10 +112,8 @@ final class SQLParser {
         buffer.append( lineSeparator );
         for(; valBegin<valOffset; valBegin++) buffer.append(' ');
         buffer.append('^');
-    	
     	return buffer.toString();    	
     }
-    
     private void checkValidIdentifier(String name, SQLToken token) throws SQLException{
         if(token.value == SQLTokenizer.ASTERISK) return;
         if(token.value != SQLTokenizer.VALUE &&
@@ -228,39 +129,16 @@ final class SQLParser {
 			throw createSyntaxError( token, Language.STXADD_IDENT_WRONG, name );
 		}
     }
-    
-	/**
-     * Returns a valid identifier from this token.
-     * @param token the token of the identifier
-     * @return the string with the name
-     * @throws SQLException if the identifier is invalid
-     */
     private String getIdentifier(SQLToken token) throws SQLException{
     	String name = token.getName(sql);
     	checkValidIdentifier( name, token );
     	return name;
     }
-    
-    
-    /**
-     * Returns a valid identifier from the next token from token stack.
-     * @return the string with the name
-     * @throws SQLException if the identifier is invalid
-     */
     private String nextIdentifier() throws SQLException{
     	return getIdentifier( nextToken( MISSING_IDENTIFIER ) );
     }
-    
-    
-    /**
-     * Check if the identifier is a 2 part name with a point in the middle like FIRST.SECOND
-     * @param name the name of the first part
-     * @return the second part if exist else returns the first part
-     * @throws SQLException 
-     */
     private String nextIdentiferPart(String name) throws SQLException{
         SQLToken token = nextToken();
-        //check if the object name include a database name
         if(token != null && token.value == SQLTokenizer.POINT){
             return nextIdentifier();
         }else{
@@ -268,8 +146,6 @@ final class SQLParser {
         }
         return name;
     }
-    
-    
     final private boolean isKeyword(SQLToken token){
     	if(token == null) return false;
     	switch(token.value){
@@ -290,10 +166,6 @@ final class SQLParser {
     	}
     	return false;
     }
-    
-	/** 
-	 * Return the last token that the method nextToken has return
-	 */
 	private SQLToken lastToken(){
 		if(tokenIdx > tokens.size()){
 			return null;
@@ -303,23 +175,20 @@ final class SQLParser {
     private void previousToken(){
         tokenIdx--;
     }
-
     private SQLToken nextToken(){
         if(tokenIdx >= tokens.size()){
-            tokenIdx++; // must be ever increment that the method previousToken() is working
+            tokenIdx++; 
             return null;
         }
         return (SQLToken)tokens.get( tokenIdx++ );
     }
-
     private SQLToken nextToken( int[] validValues) throws SQLException{
         SQLToken token = nextToken();
         if(token == null) throw createSyntaxError( token, validValues);
         if(validValues == MISSING_EXPRESSION){
-            return token; // an expression can be contained in every token.
+            return token; 
         }
         if(validValues == MISSING_IDENTIFIER){
-            // the follow token are not valid identifier
             switch(token.value){
                 case SQLTokenizer.PARENTHESIS_L:
                 case SQLTokenizer.PARENTHESIS_R:
@@ -333,17 +202,9 @@ final class SQLParser {
         }
         throw createSyntaxError( token, validValues);
     }
-    
-
-    /**
-     * A single SELECT of a UNION or only a simple single SELECT.
-     * @return
-     * @throws SQLException
-     */
     private CommandSelect singleSelect() throws SQLException{
         CommandSelect selCmd = new CommandSelect(con.log);
 		SQLToken token;
-        // scan for prefix like DISTINCT, ALL and the TOP clause; sample: SELECT TOP 15 ...
 Switch: while(true){
 			token = nextToken(MISSING_EXPRESSION);
 			switch(token.value){
@@ -367,27 +228,22 @@ Switch: while(true){
 					break Switch;
 			}
 		}
-
         while(true){
             Expression column = expression(selCmd, 0);
             selCmd.addColumnExpression( column );
-
             token = nextToken();
-            if(token == null) return selCmd; // SELECT without FROM
-
+            if(token == null) return selCmd; 
             boolean as = false;
             if(token.value == SQLTokenizer.AS){
                 token = nextToken(MISSING_EXPRESSION);
                 as = true;
             }
-
             if(as || (!isKeyword(token))){
             	String alias = getIdentifier( token);
                 column.setAlias( alias );
                 token = nextToken();
-                if(token == null) return selCmd; // SELECT without FROM
+                if(token == null) return selCmd; 
             }
-
             switch(token.value){
                 case SQLTokenizer.COMMA:
                         if(column == null) throw createSyntaxError( token, MISSING_EXPRESSION );
@@ -398,7 +254,6 @@ Switch: while(true){
                         column = null;
                         from(selCmd);
                         return selCmd;
-
                 default:
                         if(!isKeyword(token))
                 			throw createSyntaxError( token, new int[]{SQLTokenizer.COMMA, SQLTokenizer.FROM} );
@@ -407,14 +262,10 @@ Switch: while(true){
             }
         }
     }
-    
-    
     final private CommandSelect select() throws SQLException{
 		CommandSelect selCmd = singleSelect();
 		SQLToken token = nextToken();
-		   		
     	UnionAll union = null; 
-	
 		while(token != null && token.value == SQLTokenizer.UNION){
 			if(union == null){
 				union = new UnionAll();
@@ -442,8 +293,6 @@ Switch: while(true){
         previousToken();
 		return selCmd;
     }
-
-
     private Command delete() throws SQLException{
     	CommandDelete cmd = new CommandDelete(con.log);
     	nextToken(MISSING_FROM);
@@ -456,22 +305,16 @@ Switch: while(true){
 		}
 		return cmd;
     }
-
-
 	private Command truncate() throws SQLException{
 		CommandDelete cmd = new CommandDelete(con.log);
 		nextToken(MISSING_TABLE);
 		from(cmd);
 		return cmd;
 	}
-
-
     private Command insert() throws SQLException{
         SQLToken token = nextToken( MISSING_INTO );
         CommandInsert cmd = new CommandInsert( con.log, nextIdentifier() );
-
 		int parthesisCount = 0;
-
 		token = nextToken(MISSING_PARENTHESIS_VALUES_SELECT);
         if(token.value == SQLTokenizer.PARENTHESIS_L){
         	token = nextToken(MISSING_EXPRESSION);
@@ -487,7 +330,6 @@ Switch: while(true){
 	            token = nextToken(MISSING_PARENTHESIS_VALUES_SELECT);
         	}
         }else cmd.noColumns = true;
-        
 Switch: while(true)
         switch(token.value){
         	case SQLTokenizer.VALUES:{
@@ -509,15 +351,11 @@ Switch: while(true)
         		throw new Error();
         }
     }
-
-
     private Command update() throws SQLException{
 		CommandUpdate cmd = new CommandUpdate(con.log);
-		// read table name
 		DataSources tables = new DataSources();
 		cmd.setTables( tables );
 		cmd.setSource( rowSource( cmd, tables, 0 ) );
-		
 		SQLToken token = nextToken(MISSING_SET);
 		while(true){
 			token = nextToken();
@@ -539,8 +377,6 @@ Switch: while(true)
 		}
 		return cmd;
     }
-
-
     private Command create() throws SQLException{
         while(true){
             SQLToken token = nextToken(COMMANDS_CREATE);
@@ -568,15 +404,11 @@ Switch: while(true)
             }
         }
     }
-	
-
     private CommandCreateDatabase createDatabase() throws SQLException{
         SQLToken token = nextToken();
         if(token == null) throw createSyntaxError( token, MISSING_EXPRESSION );
         return new CommandCreateDatabase( con.log, token.getName(sql));
     }
-	
-    
     private CommandTable createTable() throws SQLException{
         String catalog;
         String tableName = catalog = nextIdentifier();
@@ -584,14 +416,11 @@ Switch: while(true)
         if(tableName == catalog) catalog = null;
         CommandTable cmdCreate = new CommandTable( con.log, catalog, tableName, SQLTokenizer.CREATE );
         SQLToken token = nextToken( MISSING_PARENTHESIS_L );
-
         nextCol:
         while(true){
             token = nextToken( MISSING_EXPRESSION );
-			
 			String constraintName;
             if(token.value == SQLTokenizer.CONSTRAINT){
-            	// reading a CONSTRAINT with name
 		    	constraintName = nextIdentifier();
 				token = nextToken( MISSING_KEYTYPE );
             }else{
@@ -614,7 +443,6 @@ Switch: while(true)
                     }else{
                         cmdCreate.addIndex( index );
                     }
-	
 					token = nextToken( MISSING_COMMA_PARENTHESIS );
 					switch(token.value){
 						case SQLTokenizer.PARENTHESIS_R:
@@ -623,7 +451,6 @@ Switch: while(true)
 							continue nextCol;
 					}
             }
-            // the token is a column name
 			token = addColumn( token, cmdCreate );
             if(token == null){
                 throw createSyntaxError(token, MISSING_COMMA_PARENTHESIS);
@@ -638,22 +465,13 @@ Switch: while(true)
             }
         }
     }
-    
-	
-    /**
-     * Parse a Column and add it to the Command. If the column is unique or primary
-     * then an index is added.
-     * @param token the SQLToken with the column name
-     * @return the token of the delimiter
-     */
     private SQLToken addColumn(SQLToken token, CommandTable cmdCreate) throws SQLException{
         String colName = getIdentifier( token );
         Column col = datatype(false);
         col.setName( colName );
-
 		token = nextToken();
         boolean nullableWasSet = false;
-        boolean defaultWasSet = col.isAutoIncrement(); // with data type COUNTER already this value is set
+        boolean defaultWasSet = col.isAutoIncrement(); 
         while(true){
             if(token == null){
                 cmdCreate.addColumn( col );
@@ -684,7 +502,6 @@ Switch: while(true)
                     break;
                 case SQLTokenizer.NULL:
                     if(nullableWasSet) throw createSyntaxError( token, MISSING_COMMA_PARENTHESIS );
-                    //col.setNullable(true); is already default
                     nullableWasSet = true;
                     break;
                 case SQLTokenizer.NOT:
@@ -704,18 +521,6 @@ Switch: while(true)
             token = nextToken();
         }
     }
-    
-
-	/**
-	 * Parse construct like:<br>
-	 * <li>PRIMARY KEY (col1)
-	 * <li>UNIQUE (col1, col2)
-	 * <li>FOREIGN KEY REFERENCES ref_table(col1)
-	 * @param cmd
-	 * @param constraintType one of SQLTokenizer.PRIMARY, SQLTokenizer.UNIQUE or SQLTokenizer.FOREIGN.
-	 * @param if it a constrain of the current column else null
-	 * @return a new IndexDescription
-	 */
 	private IndexDescription index(Command cmd, int constraintType, String tableName, String contrainName, String columnName) throws SQLException{
 		if(constraintType != SQLTokenizer.UNIQUE) nextToken( MISSING_KEY );
 		SQLToken token = nextToken();
@@ -723,7 +528,6 @@ Switch: while(true)
     		switch(token.value){
     			case SQLTokenizer.CLUSTERED:
     			case SQLTokenizer.NONCLUSTERED:
-    				// ignoring, this tokens form MS SQL Server are ignored
     				break;
                 default:
                     previousToken();
@@ -734,21 +538,13 @@ Switch: while(true)
 		Strings columns = new Strings();
 		Expressions expressions = new Expressions();
 		if(columnName != null){
-			//Constraint for a single column together with the column definition
 			columns.add(columnName);
 			expressions.add(new ExpressionName(columnName));
 		}else{
-			//Constraint as addition definition
             expressionDefList( cmd, expressions, columns );
 		}
 		return new IndexDescription( contrainName, tableName, constraintType, expressions, columns);
 	}
-
-
-    /**
-     * Read a DataTpe description. This is used for CREATE TABLE and CONVERT function. 
-     * @param isEscape true then the data types start with "SQL_". This is used for the Escape Syntax.
-     */
     private Column datatype(boolean isEscape) throws SQLException{
 		SQLToken token;
 		int dataType;
@@ -780,8 +576,6 @@ Switch: while(true)
 			dataType = token.value;
 		}
 		Column col = new Column();
-
-		// two-part  data type
 		if(dataType == SQLTokenizer.LONG){
 			token = nextToken();
 			if(token != null && token.value == SQLTokenizer.RAW){
@@ -791,11 +585,9 @@ Switch: while(true)
 				previousToken();
 			}
 		}
-
 		switch(dataType){
 			case SQLTokenizer.RAW:
 				dataType = SQLTokenizer.VARBINARY;
-				// no break;
 			case SQLTokenizer.CHAR:
 			case SQLTokenizer.VARCHAR:
 			case SQLTokenizer.NCHAR:
@@ -803,7 +595,6 @@ Switch: while(true)
 			case SQLTokenizer.BINARY:
 			case SQLTokenizer.VARBINARY:
 			{
-				// detect the maximum column size
                 token = nextToken();
 				int displaySize;
 				if(token == null || token.value != SQLTokenizer.PARENTHESIS_L){
@@ -833,7 +624,6 @@ Switch: while(true)
 			case SQLTokenizer.DECIMAL:
                 token = nextToken();
 				if(token != null && token.value == SQLTokenizer.PARENTHESIS_L){
-					// read the precision of the data type
 					token = nextToken( MISSING_EXPRESSION );
 					int value;
 					try{
@@ -844,7 +634,6 @@ Switch: while(true)
 					col.setPrecision(value);
 					token = nextToken( MISSING_COMMA_PARENTHESIS );
 					if(token.value == SQLTokenizer.COMMA){
-						// read the scale of the data type
 						token = nextToken( MISSING_EXPRESSION );
 						try{
 							value = Integer.parseInt(token.getName(sql) );
@@ -855,7 +644,7 @@ Switch: while(true)
 						nextToken( MISSING_PARENTHESIS_R );
 					}
 				}else{
-					col.setPrecision(18); //default Precision for decimal and numeric
+					col.setPrecision(18); 
                     previousToken();
 				}
 				break;
@@ -863,20 +652,15 @@ Switch: while(true)
 		col.setDataType( dataType );
 		return col;
     }
-    
     private CommandCreateView createView() throws SQLException{
     	String viewName = nextIdentifier();
-
 		nextToken(MISSING_AS);
 		SQLToken token = nextToken(MISSING_SELECT);
 		CommandCreateView cmd = new CommandCreateView( con.log, viewName );
-		
 		cmd.sql = new String(sql, token.offset, sql.length-token.offset );
-		select(); //Parse to check for valid
+		select(); 
         return cmd;
     }
-
-
     private CommandTable createIndex(boolean unique) throws SQLException{
         String indexName = nextIdentifier();
         nextToken(MISSING_ON);
@@ -894,25 +678,19 @@ Switch: while(true)
                 unique ? SQLTokenizer.UNIQUE : SQLTokenizer.INDEX, 
                         expressions, 
                         columns);
-        //TODO Create Index
 		Object[] param = { "Create Index" };
         throw SmallSQLException.create(Language.UNSUPPORTED_OPERATION, param);
     }
-
     private CommandCreateDatabase createProcedure() throws SQLException{
-        //TODO Create Procedure
 		Object[] param = { "Create Procedure" };
     	throw SmallSQLException.create(Language.UNSUPPORTED_OPERATION, param);
     }
-
     private Command drop() throws SQLException{
         SQLToken tokenType = nextToken(COMMANDS_DROP);
-        
 		String catalog;
 		String name = catalog = nextIdentifier();
         name = nextIdentiferPart( name );
         if(name == catalog) catalog = null;
-
         switch(tokenType.value){
             case SQLTokenizer.DATABASE:
             case SQLTokenizer.TABLE:
@@ -924,8 +702,6 @@ Switch: while(true)
                 throw createSyntaxError( tokenType, COMMANDS_DROP );
         }
     }
-
-
     private Command alter() throws SQLException{
     	SQLToken tokenType = nextToken(COMMANDS_ALTER);
 		String catalog;
@@ -939,19 +715,13 @@ Switch: while(true)
             if(tableName == catalog) catalog = null;
         }
         switch(tokenType.value){
-    	//case SQLTokenizer.DATABASE:
         case SQLTokenizer.TABLE:
             return alterTable( catalog, tableName );
-        //case SQLTokenizer.VIEW:
-        //case SQLTokenizer.INDEX:
-        //case SQLTokenizer.PROCEDURE:
         default:
     		Object[] param = { "ALTER " + tokenType.getName( sql ) };
         	throw SmallSQLException.create(Language.UNSUPPORTED_OPERATION, param);
         }
     }
-    
-    
     Command alterTable( String catalog, String name ) throws SQLException{
     	SQLToken tokenType = nextToken(MISSING_ADD_ALTER_DROP);
         CommandTable cmd = new CommandTable( con.log, catalog, name, tokenType.value );
@@ -962,15 +732,12 @@ Switch: while(true)
     			token = nextToken( MISSING_IDENTIFIER );
     			token = addColumn( token, cmd );
     		}while(token != null && token.value == SQLTokenizer.COMMA );
-
     		return cmd;
     	default:
     		Object[] param = { "ALTER TABLE " + tokenType.getName( sql ) };
             throw SmallSQLException.create(Language.UNSUPPORTED_OPERATION, param);
     	}
     }
-    
-
     private CommandSet set() throws SQLException{
         SQLToken token = nextToken( COMMANDS_SET );
         switch(token.value){
@@ -980,7 +747,6 @@ Switch: while(true)
                 throw new Error();
         }
     }
-
     private CommandSet setTransaction() throws SQLException{
         SQLToken token = nextToken( MISSING_ISOLATION );
         token = nextToken( MISSING_LEVEL );
@@ -1010,28 +776,15 @@ Switch: while(true)
             default:
                 throw new Error();
         }
-
-
     }
-
     private Command execute() throws SQLException{
-        //TODO Execute
         throw SmallSQLException.create(Language.UNSUPPORTED_OPERATION, "Execute");
     }
-
-    /**
-     * Read a Expression list in parenthesis like of VALUES() or functions. 
-     * The left parenthesis is already consumed.
-     * 
-     * @param cmd is needed to add parameters "?" with addParameter() 
-     * @see #expressionDefList
-     */ 
     private Expressions expressionParenthesisList(Command cmd) throws SQLException{
 		Expressions list = new Expressions();
 		{
 			SQLToken token = nextToken();
 			if(token != null && token.value == SQLTokenizer.PARENTHESIS_R){
-				// empty list like functions without parameters
 				return list;
 			}
 			previousToken();
@@ -1049,33 +802,24 @@ Switch: while(true)
             }
         }
     }
-
-    
-    /**
-     * Read a list of expressions. The list is limit from specific SQL keywords like SELECT, GROUP BY, ORDER BY
-     */
     private Expressions expressionTokenList(Command cmd, int listType) throws SQLException{
 		Expressions list = new Expressions();
         while(true){
         	Expression expr = expression(cmd, 0);
             list.add( expr );
             SQLToken token = nextToken();
-            
 			if(listType == SQLTokenizer.ORDER && token != null){
 				switch(token.value){
 					case SQLTokenizer.DESC:
 						expr.setAlias(SQLTokenizer.DESC_STR);
-						//no break;
 					case SQLTokenizer.ASC:
 						token = nextToken();
 				}				
 			}
-			
 			if(token == null) {
 				previousToken();
 				return list;
 			}
-
 			switch(token.value){
                 case SQLTokenizer.COMMA:
                     continue;
@@ -1088,8 +832,6 @@ Switch: while(true)
             }
         }
     }
-    
-    
     private void expressionDefList(Command cmd, Expressions expressions, Strings columns) throws SQLException{
         SQLToken token = nextToken();
         if(token.value != SQLTokenizer.PARENTHESIS_L) throw createSyntaxError(token, MISSING_PARENTHESIS_L );
@@ -1099,12 +841,10 @@ Switch: while(true)
             token = nextToken();
             if(token != null) offset = token.offset;
             previousToken();  
-            
             expressions.add( expression(cmd, 0) );
             SQLToken last = lastToken();
             int length = last.offset + last.length - offset;
             columns.add( new String( sql, offset, length ) );
-
             token = nextToken(MISSING_COMMA_PARENTHESIS);
             switch(token.value){
                 case SQLTokenizer.PARENTHESIS_R:
@@ -1116,13 +856,6 @@ Switch: while(true)
             }
         }
     }
-    
-
-	/**
-	 * Read a complex expression that can be build from multiple atomic expressions.
-     * @param cmd is needed to add parameters "?" with addParameter() 
-	 * @param previousOperationLevel the level of the left operation.
-	 */
     private Expression expression(Command cmd, int previousOperationLevel) throws SQLException{
         SQLToken token = nextToken(MISSING_EXPRESSION);
         Expression leftExpr;
@@ -1217,12 +950,6 @@ Switch: while(true)
         previousToken();
         return leftExpr;
     }
-
-    /**
-     * This method parse a single expression like 12, 'qwert', 0x3F or a column name.
-     * 
-     * @param cmd is needed to add parameters "?" with addParameter() 
-     */
     private Expression expressionSingle(Command cmd, SQLToken token) throws SQLException{
         boolean isMinus = false;
         if(token != null){
@@ -1252,20 +979,20 @@ Switch: while(true)
                         SQLToken para = nextToken(MISSING_EXPRESSION);
                         Expression expr;
                         switch(token.value){
-                            case SQLTokenizer.D: // date escape sequence
+                            case SQLTokenizer.D: 
                             	expr = new ExpressionValue( DateTime.valueOf(para.getName(sql), SQLTokenizer.DATE), SQLTokenizer.DATE );
                             	break;
-                            case SQLTokenizer.T: // time escape sequence
+                            case SQLTokenizer.T: 
                                 expr = new ExpressionValue( DateTime.valueOf(para.getName(sql), SQLTokenizer.TIME), SQLTokenizer.TIME );
                             	break;
-                            case SQLTokenizer.TS: // timestamp escape sequence
+                            case SQLTokenizer.TS: 
                                 expr = new ExpressionValue( DateTime.valueOf(para.getName(sql), SQLTokenizer.TIMESTAMP), SQLTokenizer.TIMESTAMP );
                             	break;
-                            case SQLTokenizer.FN: // function escape sequence
+                            case SQLTokenizer.FN: 
                             	nextToken(MISSING_PARENTHESIS_L);
                             	expr = function(cmd, para, true);
                             	break;
-                            case SQLTokenizer.CALL: // call escape sequence
+                            case SQLTokenizer.CALL: 
                                 throw new java.lang.UnsupportedOperationException("call escape sequence");
                             default: throw new Error();
                         }
@@ -1280,14 +1007,12 @@ Switch: while(true)
                 		return caseExpr(cmd);
                 case SQLTokenizer.MINUS:
                 case SQLTokenizer.PLUS:
-                        // sign detection
                         do{
                             if(token.value == SQLTokenizer.MINUS)
                                     isMinus = !isMinus;
                             token = nextToken();
                             if(token == null) throw createSyntaxError( token, MISSING_EXPRESSION );
                         }while(token.value == SQLTokenizer.MINUS || token.value == SQLTokenizer.PLUS);
-                        // no Break
                 default:
                         SQLToken token2 = nextToken();
                         if(token2 != null && token2.value == SQLTokenizer.PARENTHESIS_L){
@@ -1295,7 +1020,6 @@ Switch: while(true)
                                 return new ExpressionArithmetic( function( cmd, token, false ),  ExpressionArithmetic.NEGATIVE );
                             return function( cmd, token, false );
                         }else{
-                            // constant expression or identifier
                             char chr1 = sql[ token.offset ];
 							if(chr1 == '$'){
 								previousToken();
@@ -1306,9 +1030,7 @@ Switch: while(true)
                             String tok = new String(sql, token.offset, token.length);
                             if((chr1 >= '0' && '9' >= chr1) || chr1 == '.'){
                                 previousToken();
-                                // first character is a digit
                                 if(token.length>1 && (sql[ token.offset +1 ] | 0x20) == 'x'){
-                                    // binary data as hex
                                     if(isMinus) {
                 						throw createSyntaxError(token, Language.STXADD_OPER_MINUS);
                                     }
@@ -1326,7 +1048,6 @@ Switch: while(true)
                                     }
                                 }
                             }else{
-                                // identifier
                                 checkValidIdentifier( tok, token );
                                 ExpressionName expr = new ExpressionName(tok);
                                 if(token2 != null && token2.value == SQLTokenizer.POINT){
@@ -1343,26 +1064,20 @@ Switch: while(true)
         }
         return null;
     }
-    
-    
     ExpressionFunctionCase caseExpr(final Command cmd) throws SQLException{
 		ExpressionFunctionCase expr = new ExpressionFunctionCase();
 		SQLToken token = nextToken(MISSING_EXPRESSION);
-		
 		Expression input = null;
 		if(token.value != SQLTokenizer.WHEN){
-			// simple CASE Syntax
 			previousToken();
 			input = expression(cmd, 0);
 			token = nextToken(MISSING_WHEN_ELSE_END);
 		}			
-			
 		while(true){
 			switch(token.value){
 				case SQLTokenizer.WHEN:				
 					Expression condition = expression(cmd, 0);
 					if(input != null){
-						// simple CASE Syntax
 						condition = new ExpressionArithmetic( input, condition, ExpressionArithmetic.EQUALS);
 					}
 					nextToken(MISSING_THEN);
@@ -1381,13 +1096,6 @@ Switch: while(true)
 			token = nextToken(MISSING_WHEN_ELSE_END);
 		}
     }
-    
-
-    /**
-     * Parse any functions. The left parenthesis is already consumed from token list.
-     * @param token the SQLToken of the function
-     * @param isEscape If the function is a FN ESCAPE sequence
-     */ 
     private Expression function( Command cmd, SQLToken token, boolean isEscape ) throws SQLException{
         Expression expr;
         switch(token.value){
@@ -1439,7 +1147,6 @@ Switch: while(true)
         Expression[] params = paramList.toArray();
         boolean invalidParamCount;
         switch(token.value){
-        // numeric functions:
             case SQLTokenizer.ABS:
                 invalidParamCount = (paramCount != 1);
                 expr = new ExpressionFunctionAbs();
@@ -1536,8 +1243,6 @@ Switch: while(true)
                 invalidParamCount =  (paramCount != 2);
                 expr = new ExpressionFunctionTruncate();
                 break;
-         
-        // string functions:
 			case SQLTokenizer.ASCII:
 				invalidParamCount = (paramCount != 1);
 				expr = new ExpressionFunctionAscii();
@@ -1558,7 +1263,7 @@ Switch: while(true)
             case SQLTokenizer.CONCAT:
                 if(paramCount != 2){
                     invalidParamCount = true;
-                    expr = null;//only for compiler
+                    expr = null;
                     break;
                 }
                 invalidParamCount = false;
@@ -1628,8 +1333,6 @@ Switch: while(true)
                 invalidParamCount = (paramCount != 1);
                 expr = new ExpressionFunctionUCase();
                 break;
-                
-        // date time functions
             case SQLTokenizer.CURDATE:
             case SQLTokenizer.CURRENTDATE:
             	invalidParamCount = (paramCount != 0);
@@ -1671,8 +1374,6 @@ Switch: while(true)
                 invalidParamCount = (paramCount != 1);
                 expr = new ExpressionFunctionYear();
                 break;
-            	
-        // system functions:
             case SQLTokenizer.IIF:
         		invalidParamCount = (paramCount != 3);
             	expr = new ExpressionFunctionIIF();
@@ -1701,18 +1402,14 @@ Switch: while(true)
         				break;
         			default:
         				invalidParamCount = true;
-        				expr = null; // only for Compiler
+        				expr = null; 
         		}
         		break;
-                    
-        // now come the aggregate functions
             case SQLTokenizer.COUNT:
 					invalidParamCount = (paramCount != 1);
 					if(params[0].getType() == Expression.NAME){
-						//detect special case COUNT(*)
 						ExpressionName param = (ExpressionName)params[0];
 						if("*".equals(param.getName()) && param.getTableAlias() == null){
-                            //set any not NULL value as parameter
 							params[0] = new ExpressionValue("*", SQLTokenizer.VARCHAR);
 						}
 					}
@@ -1741,7 +1438,7 @@ Switch: while(true)
 			case SQLTokenizer.AVG:
 					if(paramCount != 1){
                         invalidParamCount = true;
-                        expr = null;//Only for the compiler
+                        expr = null;
                         break;
                     }
 					expr = new ExpressionName( Expression.SUM );
@@ -1759,20 +1456,15 @@ Switch: while(true)
         expr.setParams( params );
         return expr;
     }
-
-    /**
-     * read a table or view name in a FROM clause. If the keyword AS exists then read it also the alias
-     */
     private RowSource tableSource( Command cmd, DataSources tables) throws SQLException{
         SQLToken token = nextToken(MISSING_EXPRESSION);
         switch(token.value){
-            case SQLTokenizer.PARENTHESIS_L: // (
+            case SQLTokenizer.PARENTHESIS_L: 
                     return rowSource( cmd, tables, SQLTokenizer.PARENTHESIS_R );
-            case SQLTokenizer.ESCAPE_L: // {
+            case SQLTokenizer.ESCAPE_L: 
                     token = nextToken(MISSING_OJ);
                     return rowSource( cmd, tables, SQLTokenizer.ESCAPE_R );
             case SQLTokenizer.SELECT:
-            		// inner select
             		ViewResult viewResult = new ViewResult( con, select() );
             		tables.add(viewResult);
             		return viewResult;
@@ -1780,20 +1472,15 @@ Switch: while(true)
         String catalog = null;
         String name = getIdentifier( token );
 		token = nextToken();
-		//check if the table name include a database name
 		if(token != null && token.value == SQLTokenizer.POINT){
 			catalog = name;
 			name = nextIdentifier();
 			token = nextToken();
 		}
-		//TableResult table = new TableResult();
-		//table.setName( catalog, name );
 		TableView tableView = Database.getTableView( con, catalog, name);
 		TableViewResult table = TableViewResult.createResult(tableView);
         tables.add( table );
-
         if(token != null && token.value == SQLTokenizer.AS){
-            // skip AS keyword, if exists
             token = nextToken(MISSING_EXPRESSION);
             table.setAlias( token.getName( sql ) );
         }else{
@@ -1801,20 +1488,13 @@ Switch: while(true)
         }
         return table;
     }
-    
-
-    /**
-     * read a join in a from clause.
-     */
     private Join join(Command cmd, DataSources tables, RowSource left, int type) throws SQLException{
         RowSource right = rowSource(cmd, tables, 0);
         SQLToken token = nextToken();
-
         while(true){
             if(token == null) {
             	throw createSyntaxError(token, Language.STXADD_JOIN_INVALID);
             }
-
             switch(token.value){
             	case SQLTokenizer.ON:
 	            	if(type == Join.RIGHT_JOIN)
@@ -1830,15 +1510,9 @@ Switch: while(true)
             }
         }
     }
-
-    /**
-     * returns a row source. A row source is a Table, Join, View or a row function.
-     *
-     */
     private RowSource rowSource(Command cmd, DataSources tables, int parenthesis) throws SQLException{
         RowSource fromSource = null;
         fromSource = tableSource(cmd, tables);
-
         while(true){
             SQLToken token = nextToken();
             if(token == null) return fromSource;
@@ -1848,13 +1522,11 @@ Switch: while(true)
                     return fromSource;
                 case SQLTokenizer.CROSS:
                     nextToken(MISSING_JOIN);
-                    //no break
                 case SQLTokenizer.COMMA:
                     fromSource = new Join( Join.CROSS_JOIN, fromSource, rowSource(cmd, tables, 0), null);
                     break;
                 case SQLTokenizer.INNER:
                     nextToken(MISSING_JOIN);
-                    //no break;
                 case SQLTokenizer.JOIN:
                     fromSource = join( cmd, tables, fromSource, Join.INNER_JOIN );
                     break;
@@ -1897,12 +1569,10 @@ Switch: while(true)
             }
         }
     }
-
     private void from(CommandSelect cmd) throws SQLException{
 		DataSources tables = new DataSources();
         cmd.setTables(tables);
         cmd.setSource( rowSource( cmd, tables, 0 ) );
-
 		SQLToken token;
         while(null != (token = nextToken())){
             switch(token.value){
@@ -1921,12 +1591,10 @@ Switch: while(true)
             }
         }
     }
-
     private void order(CommandSelect cmd) throws SQLException{
         nextToken(MISSING_BY);
         cmd.setOrder(expressionTokenList(cmd, SQLTokenizer.ORDER));
     }
-    
     private void limit(CommandSelect selCmd) throws SQLException{
         SQLToken token = nextToken(MISSING_EXPRESSION);
         try{
@@ -1936,21 +1604,16 @@ Switch: while(true)
             throw createSyntaxError(token, Language.STXADD_NOT_NUMBER, token.getName(sql));
         }
     }
-
     private void group(CommandSelect cmd) throws SQLException{
         nextToken(MISSING_BY);
         cmd.setGroup( expressionTokenList(cmd, SQLTokenizer.GROUP) );
     }
-
     private void where(CommandSelect cmd) throws SQLException{
         cmd.setWhere( expression(cmd, 0) );
     }
-
     private void having(CommandSelect cmd) throws SQLException{
         cmd.setHaving( expression(cmd, 0) );
     }
-
-
     private static final int[] COMMANDS = {SQLTokenizer.SELECT, SQLTokenizer.DELETE, SQLTokenizer.INSERT, SQLTokenizer.UPDATE, SQLTokenizer.CREATE, SQLTokenizer.DROP, SQLTokenizer.ALTER, SQLTokenizer.SET, SQLTokenizer.USE, SQLTokenizer.EXECUTE, SQLTokenizer.TRUNCATE};
     private static final int[] COMMANDS_ESCAPE = {SQLTokenizer.D, SQLTokenizer.T, SQLTokenizer.TS, SQLTokenizer.FN, SQLTokenizer.CALL};
     private static final int[] COMMANDS_ALTER = {SQLTokenizer.DATABASE, SQLTokenizer.TABLE, SQLTokenizer.VIEW,  SQLTokenizer.PROCEDURE, };
@@ -2002,6 +1665,4 @@ Switch: while(true)
 	private static final int[] MISSING_THEN = {SQLTokenizer.THEN};
 	private static final int[] MISSING_WHEN_ELSE_END = {SQLTokenizer.WHEN, SQLTokenizer.ELSE, SQLTokenizer.END};
 	private static final int[] MISSING_ADD_ALTER_DROP = {SQLTokenizer.ADD, SQLTokenizer.ALTER, SQLTokenizer.DROP};
-	
-	
 }

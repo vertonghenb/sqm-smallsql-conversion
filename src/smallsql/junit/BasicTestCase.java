@@ -1,62 +1,21 @@
-/* =============================================================
- * SmallSQL : a free Java DBMS library for the Java(tm) platform
- * =============================================================
- *
- * (C) Copyright 2004-2007, by Volker Berlin.
- *
- * Project Info:  http://www.smallsql.de/
- *
- * This library is free software; you can redistribute it and/or modify it 
- * under the terms of the GNU Lesser General Public License as published by 
- * the Free Software Foundation; either version 2.1 of the License, or 
- * (at your option) any later version.
- *
- * This library is distributed in the hope that it will be useful, but 
- * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY 
- * or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public 
- * License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public
- * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, 
- * USA.  
- *
- * [Java is a trademark or registered trademark of Sun Microsystems, Inc. 
- * in the United States and other countries.]
- *
- * ---------------
- * Column.java
- * ---------------
- * BasicTestCase: Volker Berlin
- * 
- */
 package smallsql.junit;
-
 import junit.framework.*;
-
 import java.io.*;
 import java.math.BigDecimal;
 import java.sql.*;
 import java.text.DateFormatSymbols;
-
 public class BasicTestCase extends TestCase {
-
-	/** Localized 3-letters months */
 	protected static final String[] MONTHS = 
 		new DateFormatSymbols().getShortMonths();
-
 	public BasicTestCase(){
         super();
     }
-
     public BasicTestCase(String name){
         super(makeNameValid(name));
     }
-    
     private static String makeNameValid(String name){
     	return name.replace(',' , ';').replace('(','{');
     }
-    
     void dropTable(Connection con, String name) throws SQLException{
 		try {
 			Statement st = con.createStatement();
@@ -70,15 +29,13 @@ public class BasicTestCase extends TestCase {
             throw e;
         }
     }
-
     void dropView(Connection con, String name){
 		try {
 			Statement st = con.createStatement();
 			st.execute("drop view "+name);
 			st.close();
-		} catch (SQLException e) {/* ignore it, if the view not exist */}
+		} catch (SQLException e) {}
     }
-
 	public void assertRSMetaData( ResultSet rs, String[] colNames, int[] types) throws Exception{
 		ResultSetMetaData rm = rs.getMetaData();
 		int count = rm.getColumnCount();
@@ -97,7 +54,6 @@ public class BasicTestCase extends TestCase {
 			}
 		}
 	}
-	
 	private final static char[] digits = {'0','1','2','3','4','5','6','7','8','9','A','B','C','D','E','F'};
 	private static String bytes2hex( byte[] bytes ){
 		StringBuffer buf = new StringBuffer(bytes.length << 1);
@@ -107,7 +63,6 @@ public class BasicTestCase extends TestCase {
 		}
 		return buf.toString();
 	}
-	
 	public void assertEqualsObject( String msg, Object obj1, Object obj2 ){
 		if(obj1 instanceof byte[]){
 			if(!java.util.Arrays.equals( (byte[])obj1, (byte[])obj2)){
@@ -116,14 +71,11 @@ public class BasicTestCase extends TestCase {
 		}else{ 
 			if(obj1 instanceof BigDecimal)
 				if(((BigDecimal)obj1).compareTo((BigDecimal)obj2) == 0) return;
-		
 			assertEquals( msg, obj1, obj2);
 		}
 	}
-	
     public void assertEqualsObject( String msg, Object obj1, Object obj2, boolean needTrim ){
         if(needTrim && obj1 != null){
-            // trim for CHAR and BINARY
             if(obj1 instanceof String) obj1 = ((String)obj1).trim();
             if(obj1 instanceof byte[]){
                 byte[] tmp = (byte[])obj1;
@@ -136,7 +88,6 @@ public class BasicTestCase extends TestCase {
             }
         }
 		if(needTrim && obj2 != null){
-			// trim for CHAR and BINARY
 			if(obj2 instanceof String) obj2 = ((String)obj2).trim();
 			if(obj2 instanceof byte[]){
 				byte[] tmp = (byte[])obj2;
@@ -150,32 +101,24 @@ public class BasicTestCase extends TestCase {
 		}
 		assertEqualsObject( msg, obj1, obj2);
     }
-    
-    
 	void assertRowCount(int sollCount, String sql ) throws Exception{
 		Connection con = AllTests.getConnection();
 		Statement st = con.createStatement();
 		ResultSet rs = st.executeQuery(sql);
         assertRowCount(sollCount,rs);
     }
-    
-    
     void assertRowCount(int sollCount, ResultSet rs ) throws Exception{
 		int colCount = rs.getMetaData().getColumnCount();
 		int count = 0;
-		//System.out.println(sql);
 		while(rs.next()){
 			count++;
 			for(int i=1; i<=colCount; i++){
 				rs.getObject(i);
-				//System.out.print( " "+rs.getObject(i));
 			}
-			//System.out.println();
 		}
 		assertEquals( "Wrong row count", sollCount, count);
 		for(int i=1; i<=colCount; i++){
 			try{
-				// if not a SQLException occur then it is an error
 				fail( "Column:"+i+" Value:"+String.valueOf(rs.getObject(i)));
 			}catch(SQLException e){
                 assertSQLException("01000", 0, e);
@@ -183,21 +126,12 @@ public class BasicTestCase extends TestCase {
 		}
 		assertFalse( "Scroll after last", rs.next() );
 	}
-
-	
-    /**
-     * Identical to the Implementation from Utils.string2boolean
-     */
     private boolean string2boolean( String val){
         try{
             return Double.parseDouble( val ) != 0;
-        }catch(NumberFormatException e){/*ignore it if it not a number*/}
+        }catch(NumberFormatException e){}
         return "true".equalsIgnoreCase( val ) || "yes".equalsIgnoreCase( val ) || "t".equalsIgnoreCase( val );
     }
-	
-	/**
-	 * Test a single Value of a the ResultSet that was produce from the SQL
-	 */
    	void assertEqualsRsValue(Object obj, String sql) throws Exception{
 		Connection con = AllTests.getConnection();
 		Statement st = con.createStatement();
@@ -205,8 +139,6 @@ public class BasicTestCase extends TestCase {
 		assertTrue( "No row produce", rs.next());
         assertEqualsRsValue(obj,rs,false);
     }
-    
-    
     void assertEqualsRsValue(Object obj, ResultSet rs, boolean needTrim) throws Exception{
         String name = rs.getMetaData().getColumnName(1);
 		assertEqualsObject( "Values not identical on read:", obj, rs.getObject(name), needTrim);
@@ -228,16 +160,16 @@ public class BasicTestCase extends TestCase {
 			assertEquals("String Boolean is different:", string2boolean(str), rs.getBoolean(name) );
             try{
                 assertEquals("String Long is different:", Long.parseLong(str), rs.getLong(name) );
-            }catch(NumberFormatException ex){/* ignore */}
+            }catch(NumberFormatException ex){}
             try{
                 assertEquals("String Integer is different:", Integer.parseInt(str), rs.getInt(name) );
-            }catch(NumberFormatException ex){/* ignore */}
+            }catch(NumberFormatException ex){}
             try{
                 assertEquals("String Float is different:", Float.parseFloat(str), rs.getFloat(name), 0.0 );
-            }catch(NumberFormatException ex){/* ignore */}
+            }catch(NumberFormatException ex){}
             try{
                 assertEquals("String Double is different:", Double.parseDouble(str), rs.getDouble(name), 0.0 );
-            }catch(NumberFormatException ex){/* ignore */}
+            }catch(NumberFormatException ex){}
 		}
 		if(obj instanceof BigDecimal){
             if(!needTrim){
@@ -264,7 +196,6 @@ public class BasicTestCase extends TestCase {
 				assertEquals("short is different:", (short)intValue, rs.getShort(name) );
 			if(intValue >= Byte.MIN_VALUE && intValue <= Byte.MAX_VALUE)
 				assertEquals("byte is different:", (byte)intValue, rs.getByte(name) );
-			
 			double value = ((Number)obj).doubleValue();
 			assertEquals("Double is different:", value, rs.getDouble(name),0.0 );
 			assertEquals("Float is different:", (float)value, rs.getFloat(name),0.0 );
@@ -295,7 +226,6 @@ public class BasicTestCase extends TestCase {
 		if(obj instanceof byte[]){
 		    assertTrue("Binary should start with 0x", rs.getString(name).startsWith("0x"));
 		}
-		
 		ResultSetMetaData metaData = rs.getMetaData();
 		String className = metaData.getColumnClassName(1);
 		assertNotNull( "ClassName:", className);
@@ -303,52 +233,40 @@ public class BasicTestCase extends TestCase {
 			Class gotClass = Class.forName(className);
 			Class objClass = obj.getClass();
 			String objClassName = objClass.getName();
-			
 			int expectedLen = metaData.getColumnDisplaySize(1);
-
-			// B/CLOBs must be treated as special cases			
 			if (gotClass.equals(java.sql.Blob.class)) {
 				assertTrue(
 					"ClassName assignable: "+className+"<->"+objClassName,
 					objClass.equals(new byte[0].getClass()));
-
 				String message = "Check DisplaySize: " + expectedLen + "!=" + Integer.MAX_VALUE + ")";
 				assertTrue( message, expectedLen == Integer.MAX_VALUE );
 			}
-			else if (gotClass.equals(java.sql.Clob.class)) { // same as NCLOB
+			else if (gotClass.equals(java.sql.Clob.class)) { 
 				assertTrue(
 					"ClassName assignable: "+className+"<->"+objClassName,
 					objClass.equals(String.class));
-
 				String message = "Check DisplaySize: " + expectedLen + "!=" + Integer.MAX_VALUE + ")";
 				assertTrue( message, expectedLen == Integer.MAX_VALUE );
 			}
 			else {
 				String foundStr = rs.getString(name);
-				
 				assertTrue("ClassName assignable: "+className+"<->"+objClassName, gotClass.isAssignableFrom(objClass));
 				assertTrue( "DisplaySize to small "+ expectedLen +"<"+foundStr.length()+" (" + foundStr + ")", expectedLen >= foundStr.length() );
 			}
 		}
    	}
-    
-    
     void assertSQLException(String sqlstate, int vendorCode, SQLException ex) {
         StringWriter sw = new StringWriter();
         ex.printStackTrace(new PrintWriter(sw));
         assertEquals( "Vendor Errorcode:"+sw, vendorCode, ex.getErrorCode() );
         assertEquals( "SQL State:"+sw, sqlstate, ex.getSQLState());
     }
-    
-
-   	
 	void printSQL(String sql) throws SQLException{
 		Connection con = AllTests.getConnection();
 		Statement st = con.createStatement();
 		ResultSet rs = st.executeQuery(sql);
 		printRS( rs );
 	}
-	
    	void printRS(ResultSet rs) throws SQLException{
    		int count = rs.getMetaData().getColumnCount();
 		while(rs.next()){ 
@@ -357,16 +275,7 @@ public class BasicTestCase extends TestCase {
 			} 
 			System.out.println();
 		}
-
    	}
-   	
-   	/**
-	 * Returns the localized 3-letters month.
-	 * 
-	 * @param ordinal
-	 *            month ordinal (1-based).
-	 * @return 3-letters month.
-	 */
    	static String getMonth3L(int ordinal) {
    		return MONTHS[ordinal - 1];
    	}

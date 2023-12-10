@@ -1,59 +1,14 @@
-/* =============================================================
- * SmallSQL : a free Java DBMS library for the Java(tm) platform
- * =============================================================
- *
- * (C) Copyright 2004-2007, by Volker Berlin.
- *
- * Project Info:  http://www.smallsql.de/
- *
- * This library is free software; you can redistribute it and/or modify it 
- * under the terms of the GNU Lesser General Public License as published by 
- * the Free Software Foundation; either version 2.1 of the License, or 
- * (at your option) any later version.
- *
- * This library is distributed in the hope that it will be useful, but 
- * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY 
- * or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public 
- * License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public
- * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, 
- * USA.  
- *
- * [Java is a trademark or registered trademark of Sun Microsystems, Inc. 
- * in the United States and other countries.]
- *
- * ---------------
- * DateTime.java
- * ---------------
- * Author: Volker Berlin
- * 
- * Created on 07.05.2004
- */
 package smallsql.database;
-
 import java.sql.*;
 import java.text.DateFormatSymbols;
 import java.util.Calendar;
 import java.util.TimeZone;
 import smallsql.database.language.Language;
-
 public final class DateTime implements Mutable{
-	
 	long time;
 	private int dataType = SQLTokenizer.TIMESTAMP;
-	
 	static final int[] MONTH_DAYS = {0,31,59,90,120,151,181,212,243,273,304,334}; 
-	
 	private static final String[] SHORT_MONTHS = new DateFormatSymbols().getShortMonths();
-	
-	/* unused code
-    DateTime(final int year, final int month, final int day, final int hour, final int minute, final int second, final int millis){
-		time = calcMillis( year, month, day, hour, minute, second, millis);
-	}*/
-	
-	
 	DateTime(long time, int dataType){
 		switch(dataType){
         case SQLTokenizer.SMALLDATETIME:
@@ -76,12 +31,9 @@ public final class DateTime implements Mutable{
 		this.time = time;
 		this.dataType = dataType;
 	}
-	
-	
 	static long calcMillis(Details details){
 		return calcMillis(details.year, details.month, details.day, details.hour, details.minute, details.second, details.millis);
 	}
-
 	static long calcMillis(int year, int month, final int day, final int hour, final int minute, final int second, final int millis){
 		long result = millis;
 		result += second * 1000;
@@ -93,39 +45,22 @@ public final class DateTime implements Mutable{
 			month %= 12;
 		}
 		result += MONTH_DAYS[month] * 86400000L;
-		result += (year - 1970) * 31536000000L; // millis 365 days
+		result += (year - 1970) * 31536000000L; 
 		result += ((year/4) - (year/100) + (year/400) - 477) * 86400000L;
 		if(month<2 && year % 4 == 0 && (year%100 != 0 || year%400 == 0))
 			result -= 86400000L;
 		return result;
 	}
-	
-	
 	static long now(){	
 		return removeDateTimeOffset( System.currentTimeMillis() );
 	}
-	
-	
-	/**
-	 * Return the day of week.<p>
-	 * 0 - Monday<p>
-	 * 1 - Tuesday<p>
-	 * 2 - Wednsday<p>
-	 * 3 - Thursday<p>
-	 * 4 - Friday<p>
-	 * 5 - Saturday<p>
-	 * 6 - Sunday<p>
-	 */
 	static int dayOfWeek(long time){
-		// the 1. Jan 1970 is a Thursday --> 3
 		return (int)((time / 86400000 + 3) % 7);
 	}
-	
 	static long parse(java.util.Date date){
 		long t = date.getTime();
 		return removeDateTimeOffset(t);
 	}
-	
 	static DateTime valueOf(java.util.Date date){
 		if(date == null) return null;
 		int type;
@@ -138,39 +73,25 @@ public final class DateTime implements Mutable{
 			type = SQLTokenizer.TIMESTAMP;
 		return new DateTime( parse(date), type);
 	}
-	
-	
 	static DateTime valueOf(java.sql.Date date){
 		if(date == null) return null;
 		return new DateTime( parse(date), SQLTokenizer.DATE);
 	}
-	
-	
 	static DateTime valueOf(java.sql.Time date){
 		if(date == null) return null;
 		return new DateTime( parse(date), SQLTokenizer.TIME);
 	}
-	
-	
 	static DateTime valueOf(java.sql.Timestamp date){
 		if(date == null) return null;
 		return new DateTime( parse(date), SQLTokenizer.TIMESTAMP);
 	}
-	
-	
-	/**
-	 * @param dataType is used for the toString() method 
-	 */
 	static DateTime valueOf(String date, int dataType) throws SQLException{
 		if(date == null) return null;
 		return new DateTime( parse(date), dataType);
 	}
-	
-	
 	static long parse(final String datetime) throws SQLException{
 		try{
 			final int length = datetime.length();
-
 			final int year;
 			final int month;
 			final int day;
@@ -178,17 +99,13 @@ public final class DateTime implements Mutable{
 			final int minute;
 			final int second;
 			final int millis;
-			
-
 			int idx1 = 0;
 			int idx2 = datetime.indexOf('-');
 			if(idx2 > 0){
 				year = Integer.parseInt(datetime.substring(idx1, idx2).trim());
-				
 				idx1 = idx2+1;
 				idx2 = datetime.indexOf('-', idx1);
 				month = Integer.parseInt(datetime.substring(idx1, idx2).trim())-1;
-				
 				idx1 = idx2+1;
 				idx2 = datetime.indexOf(' ', idx1);
 				if(idx2 < 0) idx2 = datetime.length();
@@ -198,21 +115,17 @@ public final class DateTime implements Mutable{
 				month = 0;
 				day   = 1;
 			}
-			
 			idx1 = idx2+1;
 			idx2 = datetime.indexOf(':', idx1);
 			if(idx2>0){
 				hour = Integer.parseInt(datetime.substring(idx1, idx2).trim());
-				
 				idx1 = idx2+1;
 				idx2 = datetime.indexOf(':', idx1);
 				minute = Integer.parseInt(datetime.substring(idx1, idx2).trim());
-				
 				idx1 = idx2+1;
 				idx2 = datetime.indexOf('.', idx1);
 				if(idx2 < 0) idx2 = datetime.length();
 				second = Integer.parseInt(datetime.substring(idx1, idx2).trim());
-				
 				idx1 = idx2+1;
 				if(idx1 < length){
 					String strMillis = datetime.substring(idx1).trim();
@@ -240,7 +153,6 @@ public final class DateTime implements Mutable{
             if(idx1 == 0 && length > 0){
                 throw SmallSQLException.create(Language.DATETIME_INVALID);
             }
-            
             if(month >= 12){
                 throw SmallSQLException.create(Language.MONTH_TOOLARGE, datetime );
             }
@@ -286,22 +198,12 @@ public final class DateTime implements Mutable{
 			throw SmallSQLException.createFromException(Language.DATETIME_INVALID, datetime, ex );
 		}
 	}
-	
-	
 	long getTimeMillis(){
 		return time;
 	}
-    
-	
 	int getDataType(){
 		return dataType;
 	}
-	
-    
-    /**
-     * Convert the this value in a String depending of the type the format is a subset of
-     * yyyy-mm-dd hh:mm:ss.nnn
-     */
 	public String toString(){
 		Details details = new Details(time);
 		StringBuffer buf = new StringBuffer();
@@ -328,18 +230,11 @@ public final class DateTime implements Mutable{
 		}
 		return buf.toString();
 	}
-	
-    
     public boolean equals(Object obj){
         if(!(obj instanceof DateTime)) return false;
         DateTime value = (DateTime)obj;
         return value.time == time && value.dataType == dataType;
     }
-    
-    
-	/**
-	 * @param style a value like the syle of CONVERT function from MS SQL Server.
-	 */
 	String toString(int style){
 		if(style < 0)
 			return toString();
@@ -347,7 +242,7 @@ public final class DateTime implements Mutable{
 		StringBuffer buf = new StringBuffer();
 		switch(style){
 			case 0:
-			case 100: // mon dd yyyy hh:miAM (oder PM)
+			case 100: 
 				buf.append( SHORT_MONTHS[ details.month ]);
 				buf.append(' ');
 				formatNumber( details.day, 2, buf);
@@ -359,107 +254,107 @@ public final class DateTime implements Mutable{
 				formatNumber( details.minute, 2, buf);
 				buf.append( details.hour < 12 ? "AM" : "PM" );
 				return buf.toString();
-			case 1:   // USA mm/dd/yy
+			case 1:   
 				formatNumber( details.month+1, 2, buf);
 				buf.append('/');
 				formatNumber( details.day, 2, buf);
 				buf.append('/');
 				formatNumber( details.year % 100, 2, buf);
 				return buf.toString();
-			case 101:   // USA mm/dd/yyyy
+			case 101:   
 				formatNumber( details.month+1, 2, buf);
 				buf.append('/');
 				formatNumber( details.day, 2, buf);
 				buf.append('/');
 				formatNumber( details.year, 4, buf);
 				return buf.toString();
-			case 2: // ANSI yy.mm.dd
+			case 2: 
 				formatNumber( details.year % 100, 2, buf);
 				buf.append('.');
 				formatNumber( details.month+1, 2, buf);
 				buf.append('.');
 				formatNumber( details.day, 2, buf);
 				return buf.toString();
-			case 102: // ANSI yyyy.mm.dd
+			case 102: 
 				formatNumber( details.year, 4, buf);
 				buf.append('.');
 				formatNumber( details.month+1, 2, buf);
 				buf.append('.');
 				formatNumber( details.day, 2, buf);
 				return buf.toString();
-			case 3: // britsh dd/mm/yy
+			case 3: 
 				formatNumber( details.day, 2, buf);
 				buf.append('/');
 				formatNumber( details.month+1, 2, buf);
 				buf.append('/');
 				formatNumber( details.year % 100, 2, buf);
 				return buf.toString();
-			case 103: // britsh dd/mm/yyyy
+			case 103: 
 				formatNumber( details.day, 2, buf);
 				buf.append('/');
 				formatNumber( details.month+1, 2, buf);
 				buf.append('/');
 				formatNumber( details.year, 4, buf);
 				return buf.toString();
-			case 4: // german dd.mm.yy
+			case 4: 
 				formatNumber( details.day, 2, buf);
 				buf.append('.');
 				formatNumber( details.month+1, 2, buf);
 				buf.append('.');
 				formatNumber( details.year % 100, 2, buf);
 				return buf.toString();
-			case 104: // german dd.mm.yyyy
+			case 104: 
 				formatNumber( details.day, 2, buf);
 				buf.append('.');
 				formatNumber( details.month+1, 2, buf);
 				buf.append('.');
 				formatNumber( details.year, 4, buf);
 				return buf.toString();
-			case 5: // italiano dd-mm-yy
+			case 5: 
 				formatNumber( details.day, 2, buf);
 				buf.append('-');
 				formatNumber( details.month+1, 2, buf);
 				buf.append('-');
 				formatNumber( details.year % 100, 2, buf);
 				return buf.toString();
-			case 105: // italiano dd-mm-yyyy
+			case 105: 
 				formatNumber( details.day, 2, buf);
 				buf.append('-');
 				formatNumber( details.month+1, 2, buf);
 				buf.append('-');
 				formatNumber( details.year, 4, buf);
 				return buf.toString();
-			case 6: // dd mon yy
+			case 6: 
 				formatNumber( details.day, 2, buf);
 				buf.append(' ');
 				buf.append( SHORT_MONTHS[ details.month ]);
 				buf.append(' ');
 				formatNumber( details.year % 100, 2, buf);
 				return buf.toString();
-			case 106: // dd mon yyyy
+			case 106: 
 				formatNumber( details.day, 2, buf);
 				buf.append(' ');
 				buf.append( SHORT_MONTHS[ details.month ]);
 				buf.append(' ');
 				formatNumber( details.year, 4, buf);
 				return buf.toString();
-			case 7: // Mon dd, yy
-				buf.append( SHORT_MONTHS[ details.month ]);
-				buf.append(' ');
-				formatNumber( details.day, 2, buf);
-				buf.append(',');
-				buf.append(' ');
-				formatNumber( details.year % 100, 2, buf);
-				return buf.toString();
-			case 107: // Mon dd, yyyy
+			case 7: 
 				buf.append( SHORT_MONTHS[ details.month ]);
 				buf.append(' ');
 				formatNumber( details.day, 2, buf);
 				buf.append(',');
 				buf.append(' ');
+				formatNumber( details.year % 100, 2, buf);
+				return buf.toString();
+			case 107: 
+				buf.append( SHORT_MONTHS[ details.month ]);
+				buf.append(' ');
+				formatNumber( details.day, 2, buf);
+				buf.append(',');
+				buf.append(' ');
 				formatNumber( details.year, 4, buf);
 				return buf.toString();
-			case 8: //hh:mm:ss
+			case 8: 
 			case 108:
 				formatNumber( details.hour, 2, buf);
 				buf.append(':');
@@ -468,7 +363,7 @@ public final class DateTime implements Mutable{
 				formatNumber( details.second, 2, buf);
 				return buf.toString();
 			case 9:
-			case 109: // mon dd yyyy hh:mi:ss:mmmAM (oder PM)
+			case 109: 
 				buf.append( SHORT_MONTHS[ details.month ]);
 				buf.append(' ');
 				formatNumber( details.day, 2, buf);
@@ -484,46 +379,46 @@ public final class DateTime implements Mutable{
 				formatMillis( details.millis, buf);
 				buf.append( details.hour < 12 ? "AM" : "PM" );
 				return buf.toString();
-			case 10: // USA mm-dd-yy
+			case 10: 
 				formatNumber( details.month+1, 2, buf);
 				buf.append('-');
 				formatNumber( details.day, 2, buf);
 				buf.append('-');
 				formatNumber( details.year % 100, 2, buf);
 				return buf.toString();
-			case 110: // USA mm-dd-yyyy
+			case 110: 
 				formatNumber( details.month+1, 2, buf);
 				buf.append('-');
 				formatNumber( details.day, 2, buf);
 				buf.append('-');
 				formatNumber( details.year, 4, buf);
 				return buf.toString();
-			case 11: // Japan yy/mm/dd
+			case 11: 
 				formatNumber( details.year % 100, 2, buf);
 				buf.append('/');
 				formatNumber( details.month+1, 2, buf);
 				buf.append('/');
 				formatNumber( details.day, 2, buf);
 				return buf.toString();
-			case 111: // Japan yy/mm/dd
+			case 111: 
 				formatNumber( details.year, 4, buf);
 				buf.append('/');
 				formatNumber( details.month+1, 2, buf);
 				buf.append('/');
 				formatNumber( details.day, 2, buf);
 				return buf.toString();
-			case 12: // ISO yymmdd
+			case 12: 
 				formatNumber( details.year % 100, 2, buf);
 				formatNumber( details.month+1, 2, buf);
 				formatNumber( details.day, 2, buf);
 				return buf.toString();
-			case 112: // ISO yyyymmdd
+			case 112: 
 				formatNumber( details.year, 4, buf);
 				formatNumber( details.month+1, 2, buf);
 				formatNumber( details.day, 2, buf);
 				return buf.toString();
 			case 13:
-			case 113: // default + millis;  dd mon yyyy hh:mm:ss:mmm(24h)
+			case 113: 
 				formatNumber( details.day, 2, buf);
 				buf.append(' ');
 				buf.append( SHORT_MONTHS[ details.month ]);
@@ -539,7 +434,7 @@ public final class DateTime implements Mutable{
 				formatMillis( details.millis, buf);
 				return buf.toString();
 			case 14:
-			case 114: // hh:mi:ss:mmm(24h)
+			case 114: 
 				formatNumber( details.hour, 2, buf);
 				buf.append(':');
 				formatNumber( details.minute, 2, buf);
@@ -549,7 +444,7 @@ public final class DateTime implements Mutable{
 				formatMillis( details.millis, buf );
 				return buf.toString();
 			case 20:
-			case 120: // ODBC kannonish; yyyy-mm-dd hh:mi:ss(24h)
+			case 120: 
 				formatNumber( details.year, 4, buf);
 				buf.append('-');
 				formatNumber( details.month+1, 2, buf);
@@ -563,7 +458,7 @@ public final class DateTime implements Mutable{
 				formatNumber( details.second, 2, buf);
 				return buf.toString();
 			case 21:
-			case 121: // ODBC kannonish + millis; yyyy-mm-dd hh:mi:ss.mmm(24h)
+			case 121: 
 				formatNumber( details.year, 4, buf);
 				buf.append('-');
 				formatNumber( details.month+1, 2, buf);
@@ -579,7 +474,7 @@ public final class DateTime implements Mutable{
 				formatMillis( details.millis, buf );
 				return buf.toString();
 			case 26:
-			case 126: // ISO8601; yyyy-mm-ddThh:mi:ss.mmm(24h)
+			case 126: 
 				formatNumber( details.year, 4, buf);
 				buf.append('-');
 				formatNumber( details.month+1, 2, buf);
@@ -594,7 +489,7 @@ public final class DateTime implements Mutable{
 				buf.append('.');
 				formatMillis( details.millis, buf );
 				return buf.toString();
-			case 130: // Kuwaiti  dd mon yyyy hh:mi:ss:mmmAM
+			case 130: 
 				formatNumber( details.day, 2, buf);
 				buf.append(' ');
 				buf.append( SHORT_MONTHS[ details.month ]);
@@ -610,7 +505,7 @@ public final class DateTime implements Mutable{
 				formatMillis( details.millis, buf);
 				buf.append( details.hour < 12 ? "AM" : "PM" );
 				return buf.toString();
-			case 131: // Kuwaiti  dd/mm/yy hh:mi:ss:mmmAM
+			case 131: 
 				formatNumber( details.day, 2, buf);
 				buf.append('/');
 				formatNumber( details.month+1, 2, buf);
@@ -628,10 +523,7 @@ public final class DateTime implements Mutable{
 			default:
 				return toString();
 		}
-		
 	}
-	
-	
 	private final static void formatNumber(int value, int digitCount, StringBuffer buf){
 		buf.setLength(buf.length() + digitCount);
 		if(value < 0) value = - value;
@@ -640,8 +532,6 @@ public final class DateTime implements Mutable{
 			value /= 10;
 		}
 	}
-	
-
 	private final static void formatMillis(int millis,  StringBuffer buf){
 		buf.append(Utils.digits[ (millis / 100) % 10 ]);
 		int value = millis % 100;
@@ -652,28 +542,18 @@ public final class DateTime implements Mutable{
 				buf.append(Utils.digits[ value ]);
 		}
 	}
-	
-	
-	/**
-	 * The hour is print in the range from 1 - 12 
-	 */
 	private final static void formatHour12(int hour,  StringBuffer buf){
 		hour %= 12;
 		if(hour == 0) hour = 12;
 		formatNumber( hour, 2, buf );
 	}
-	
-	
 	private final static long addDateTimeOffset(long datetime){
         return addDateTimeOffset( datetime, TimeZone.getDefault());
 	}
-
-
     final static long addDateTimeOffset(long datetime, TimeZone timezone){
         int t = (int)(datetime % 86400000);
         int d = (int)(datetime / 86400000);
         if(t<0){
-            //Time before 1970 and not a full day
             t += 86400000;
             d--;
         }              
@@ -686,8 +566,6 @@ public final class DateTime implements Mutable{
             return cal.getTimeInMillis();
         }
     }
-
-
 	private static long removeDateTimeOffset(long datetime){
 		synchronized(cal){
 			cal.setTimeZone( TimeZone.getDefault() );
@@ -695,23 +573,15 @@ public final class DateTime implements Mutable{
 			return datetime + cal.get( Calendar.ZONE_OFFSET) + cal.get( Calendar.DST_OFFSET);
 		}
 	}
-	
-	
 	static Timestamp getTimestamp(long time){
 		return new Timestamp( DateTime.addDateTimeOffset(time) ); 
 	}
-
-
 	static Time getTime(long time){
 		return new Time( DateTime.addDateTimeOffset(time) ); 
 	}
-
-
 	static Date getDate(long time){
 		return new Date( DateTime.addDateTimeOffset(time) ); 
 	}
-    
-    
 	public Object getImmutableObject(){
 		switch(dataType){
 			case SQLTokenizer.DATE:
@@ -722,8 +592,6 @@ public final class DateTime implements Mutable{
 				return getTimestamp( time );
 		}
 	}
-	
-
 	static class Details{
 		int year;
 		int month;
@@ -733,12 +601,10 @@ public final class DateTime implements Mutable{
 		int minute;
 		int second;
 		int millis;
-		
 		Details(long time){
 			int t = (int)(time % 86400000);
 			int d = (int)(time / 86400000);
 			if(t<0){
-			    //Time before 1970 and not a full day
 				t += 86400000;
 				d--;
 			}				
@@ -749,14 +615,12 @@ public final class DateTime implements Mutable{
 			minute = t % 60;
 			t /= 60;
 			hour = t % 24;
-
 			year = 1970 - (int)(t / 365.2425);
 			boolean isLeap;
 			do{
 				isLeap = false;
 				dayofyear = day = d - ((year - 1970)*365 + (year/4) - (year/100) + (year/400) - 477);
 				if(isLeapYear(year)){
-					// is leap year
 					if(day < 59){
 						day++;
 						isLeap = true;
@@ -773,9 +637,7 @@ public final class DateTime implements Mutable{
 				}
 				break;
 			}while(true);
-			
 			if(isLeap && day == 59){
-				// 29. Feb
 				month = 1;
 				day   = 29;
 			}else{
@@ -789,14 +651,8 @@ public final class DateTime implements Mutable{
 			}
 		}
 	}
-    
-    /**
-     * @return true if the year is a leap year
-     */
     static boolean isLeapYear(int year){
         return year % 4 == 0 && (year%100 != 0 || year%400 == 0);
     }
-
 	private static final Calendar cal = Calendar.getInstance();
-
 }

@@ -1,47 +1,10 @@
-/* =============================================================
- * SmallSQL : a free Java DBMS library for the Java(tm) platform
- * =============================================================
- *
- * (C) Copyright 2004-2006, by Volker Berlin.
- *
- * Project Info:  http://www.smallsql.de/
- *
- * This library is free software; you can redistribute it and/or modify it 
- * under the terms of the GNU Lesser General Public License as published by 
- * the Free Software Foundation; either version 2.1 of the License, or 
- * (at your option) any later version.
- *
- * This library is distributed in the hope that it will be useful, but 
- * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY 
- * or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public 
- * License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public
- * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, 
- * USA.  
- *
- * [Java is a trademark or registered trademark of Sun Microsystems, Inc. 
- * in the United States and other countries.]
- *
- * ---------------
- * TestOperatoren.java
- * ---------------
- * Author: Volker Berlin
- * 
- */
 package smallsql.junit;
-
 import junit.framework.*;
 import java.sql.*;
 import java.math.*;
-
 public class TestOperatoren extends BasicTestCase {
-
     private TestValue testValue;
-
     private static final String table = "table_functions";
-
     private static final TestValue[] TESTS = new TestValue[]{
         a("tinyint"           , new Byte( (byte)3),     new Byte( (byte)4)),
         a("byte"              , new Byte( (byte)3),     new Byte( (byte)4)),
@@ -85,13 +48,10 @@ public class TestOperatoren extends BasicTestCase {
         a("bit"               , Boolean.FALSE,          Boolean.TRUE),
         a("uniqueidentifier"  , "12345678-3445-3445-3445-1234567890ab",      "12345679-3445-3445-3445-1234567890ac"),
     };
-
-
     TestOperatoren(TestValue testValue){
         super(testValue.dataType);
         this.testValue = testValue;
     }
-
     public void tearDown(){
         try{
             Connection con = AllTests.getConnection();
@@ -99,10 +59,8 @@ public class TestOperatoren extends BasicTestCase {
             st.execute("drop table " + table);
             st.close();
         }catch(Throwable e){
-            //e.printStackTrace();
         }
     }
-
     public void setUp(){
         tearDown();
         try{
@@ -111,31 +69,24 @@ public class TestOperatoren extends BasicTestCase {
             st.execute("create table " + table + "(a " + testValue.dataType +", b " + testValue.dataType + ")");
             st.close();
             PreparedStatement pr = con.prepareStatement("INSERT into " + table + "(a,b) Values(?,?)");
-
             pr.setObject( 1, testValue.small);
             pr.setObject( 2, testValue.large);
             pr.execute();
-
             pr.setObject( 1, testValue.small);
             pr.setObject( 2, testValue.small);
             pr.execute();
-
             pr.setObject( 1, testValue.large);
             pr.setObject( 2, testValue.large);
             pr.execute();
-
             pr.setObject( 1, testValue.large);
             pr.setObject( 2, testValue.small);
             pr.execute();
-
             pr.setObject( 1, null);
             pr.setObject( 2, testValue.small);
             pr.execute();
-
             pr.setObject( 1, testValue.small);
             pr.setObject( 2, null);
             pr.execute();
-
             pr.setObject( 1, null);
             pr.setObject( 2, null);
             pr.execute();
@@ -144,67 +95,54 @@ public class TestOperatoren extends BasicTestCase {
             e.printStackTrace();
         }
     }
-
-
     public void runTest() throws Exception{
         Connection con = AllTests.getConnection();
         Statement st = con.createStatement();
         ResultSet rs;
-
         rs = st.executeQuery("Select * from " + table + " where 1 = 0");
         assertFalse( "To many rows", rs.next() );
-
         rs = st.executeQuery("Select * from " + table + " where a = b");
         assertTrue( "To few rows", rs.next() );
         assertEqualsObject( "Values not equals", rs.getObject(1), rs.getObject(2), false);
         assertTrue( "To few rows", rs.next() );
         assertEqualsObject( "Values not equals", rs.getObject(1), rs.getObject(2), false);
         assertFalse( "To many rows", rs.next() );
-
         rs = st.executeQuery("Select * from " + table + " where a <= b and b <= a");
         assertTrue( "To few rows", rs.next() );
         assertEqualsObject( "Values not equals", rs.getObject(1), rs.getObject(2), false);
         assertTrue( "To few rows", rs.next() );
         assertEqualsObject( "Values not equals", rs.getObject(1), rs.getObject(2), false);
         assertFalse( "To many rows", rs.next() );
-
         rs = st.executeQuery("Select * from " + table + " where (a > (b))");
         assertTrue( "To few rows", rs.next() );
         assertFalse( "To many rows", rs.next() );
-
         rs = st.executeQuery("Select * from " + table + " where a >= b");
         assertTrue( "To few rows", rs.next() );
         assertTrue( "To few rows", rs.next() );
         assertTrue( "To few rows", rs.next() );
         assertFalse( "To many rows", rs.next() );
-
         rs = st.executeQuery("Select * from " + table + " where not (a >= b)");
         assertTrue( "To few rows", rs.next() );
         assertTrue( "To few rows", rs.next() );
         assertTrue( "To few rows", rs.next() );
         assertTrue( "To few rows", rs.next() );
         assertFalse( "To many rows", rs.next() );
-
         rs = st.executeQuery("Select * from " + table + " where a < b");
         assertTrue( "To few rows", rs.next() );
         assertFalse( "To many rows", rs.next() );
-
         rs = st.executeQuery("Select * from " + table + " where a < b or a>b");
         assertTrue( "To few rows", rs.next() );
         assertTrue( "To few rows", rs.next() );
         assertFalse( "To many rows", rs.next() );
-
         rs = st.executeQuery("Select * from " + table + " where a <= b");
         assertTrue( "To few rows", rs.next() );
         assertTrue( "To few rows", rs.next() );
         assertTrue( "To few rows", rs.next() );
         assertFalse( "To many rows", rs.next() );
-
         rs = st.executeQuery("Select * from " + table + " where a <> b");
         assertTrue( "To few rows", rs.next() );
         assertTrue( "To few rows", rs.next() );
         assertFalse( "To many rows", rs.next() );
-
         PreparedStatement pr = con.prepareStatement("Select * from " + table + " where a between ? and ?");
         pr.setObject( 1, testValue.small);
         pr.setObject( 2, testValue.large);
@@ -216,7 +154,6 @@ public class TestOperatoren extends BasicTestCase {
         assertTrue( "To few rows", rs.next() );
         assertFalse( "To many rows", rs.next() );
 		pr.close();
-
 		pr = con.prepareStatement("Select * from " + table + " where a not between ? and ?");
 		pr.setObject( 1, testValue.small);
 		pr.setObject( 2, testValue.large);
@@ -225,7 +162,6 @@ public class TestOperatoren extends BasicTestCase {
 		assertTrue( "To few rows", rs.next() );
 		assertFalse( "To many rows", rs.next() );
 		pr.close();
-
 		pr = con.prepareStatement("Select * from " + table + " where a in(?,?)");
 		pr.setObject( 1, testValue.small);
 		pr.setObject( 2, testValue.large);
@@ -237,7 +173,6 @@ public class TestOperatoren extends BasicTestCase {
 		assertTrue( "To few rows", rs.next() );
 		assertFalse( "To many rows", rs.next() );
 		pr.close();
-
 		pr = con.prepareStatement("Select * from " + table + " where a not in(?,?)");
 		pr.setObject( 1, testValue.small);
 		pr.setObject( 2, testValue.large);
@@ -246,10 +181,8 @@ public class TestOperatoren extends BasicTestCase {
 		assertTrue( "To few rows", rs.next());
 		assertFalse( "To many rows", rs.next() );
 		pr.close();
-
         st.close();
     }
-
     public static Test suite() throws Exception{
         TestSuite theSuite = new TestSuite("Operatoren");
         for(int i=0; i<TESTS.length; i++){
@@ -257,13 +190,9 @@ public class TestOperatoren extends BasicTestCase {
         }
         return theSuite;
     }
-
     public static void main(String[] argv) {
         junit.swingui.TestRunner.main(new String[]{TestOperatoren.class.getName()});
     }
-
-
-
     private static TestValue a(String dataType, Object small, Object large){
         TestValue value = new TestValue();
         value.dataType  = dataType;
@@ -271,11 +200,9 @@ public class TestOperatoren extends BasicTestCase {
         value.large     = large;
         return value;
     }
-
     private static class TestValue{
         String dataType;
         Object small;
         Object large;
     }
-
 }

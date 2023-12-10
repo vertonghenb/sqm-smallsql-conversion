@@ -1,22 +1,10 @@
-/*
- * Created on 14.11.2006
- */
 package smallsql.junit;
-
 import java.sql.*;
-
-
-/**
- * @author Volker Berlin
- */
 public class TestAlterTable2 extends BasicTestCase {
-
     private final String table = "AlterTable2";
-    
     public void setUp(){
         tearDown();
     }
-    
     public void tearDown(){
         try {
             dropTable( AllTests.getConnection(), table );
@@ -24,8 +12,6 @@ public class TestAlterTable2 extends BasicTestCase {
             ex.printStackTrace();
         }
     }
-    
-
     public void testWithPrimaryKey() throws Exception{
         Connection con = AllTests.getConnection();
         Statement st = con.createStatement();
@@ -36,8 +22,6 @@ public class TestAlterTable2 extends BasicTestCase {
         rs = con.getMetaData().getIndexInfo( null, null, table, false, false );
         assertRowCount( 1, rs );
     }
-    
-    
     public void testAddPrimaryKey() throws Exception{
         Connection con = AllTests.getConnection();
         Statement st = con.createStatement();
@@ -48,13 +32,10 @@ public class TestAlterTable2 extends BasicTestCase {
         rs = con.getMetaData().getIndexInfo( null, null, table, false, false );
         assertRowCount( 1, rs );
     }
-    
-    
     public void testAdd2PrimaryKeys() throws Exception{
         Connection con = AllTests.getConnection();
         Statement st = con.createStatement();
         st.execute("create table "+table+" (a varchar(2) primary key)");
-        
         try {
             st.execute("alter table "+table+" add b varchar(4) primary key");
             fail("2 primary keys are invalid");
@@ -66,8 +47,6 @@ public class TestAlterTable2 extends BasicTestCase {
         rs = con.getMetaData().getIndexInfo( null, null, table, false, false );
         assertRowCount( 1, rs );
     }
-    
-
     public void testAdd2Keys() throws Exception{
         Connection con = AllTests.getConnection();
         Statement st = con.createStatement();
@@ -78,5 +57,4 @@ public class TestAlterTable2 extends BasicTestCase {
         rs = con.getMetaData().getIndexInfo( null, null, table, false, false );
         assertRowCount( 2, rs );
     }
-
 }

@@ -1,67 +1,21 @@
-/* =============================================================
- * SmallSQL : a free Java DBMS library for the Java(tm) platform
- * =============================================================
- *
- * (C) Copyright 2004-2007, by Volker Berlin.
- *
- * Project Info:  http://www.smallsql.de/
- *
- * This library is free software; you can redistribute it and/or modify it 
- * under the terms of the GNU Lesser General Public License as published by 
- * the Free Software Foundation; either version 2.1 of the License, or 
- * (at your option) any later version.
- *
- * This library is distributed in the hope that it will be useful, but 
- * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY 
- * or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public 
- * License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public
- * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, 
- * USA.  
- *
- * [Java is a trademark or registered trademark of Sun Microsystems, Inc. 
- * in the United States and other countries.]
- *
- * ---------------
- * SSResultSetMetaData.java
- * ---------------
- * Author: Volker Berlin
- * 
- */
 package smallsql.database;
-
 import java.sql.*;
-
 import smallsql.database.language.Language;
-
-
 public class SSResultSetMetaData implements ResultSetMetaData {
-
     Expressions columns;
-
     public int getColumnCount() throws SQLException {
         return columns.size();
     }
-    
-    
     public boolean isAutoIncrement(int column) throws SQLException {
         return getColumnExpression( column ).isAutoIncrement();
     }
-    
-    
     public boolean isCaseSensitive(int column) throws SQLException {
         return getColumnExpression( column ).isCaseSensitive();
     }
-    
-    
     public boolean isSearchable(int column) throws SQLException {
     	int type = getColumnExpression( column ).getType();
         return type == Expression.NAME || type == Expression.FUNCTION;
     }
-    
-    
     public boolean isCurrency(int column) throws SQLException {
         switch(getColumnExpression( column ).getDataType()){
             case SQLTokenizer.MONEY:
@@ -70,18 +24,12 @@ public class SSResultSetMetaData implements ResultSetMetaData {
         }
         return false;
     }
-    
-    
     public int isNullable(int column) throws SQLException {
         return getColumnExpression( column ).isNullable() ? columnNullable : columnNoNulls;
     }
-    
-    
     public boolean isSigned(int column) throws SQLException {
 		return isSignedDataType(getColumnExpression( column ).getDataType());
     }
-    
-    
 	static boolean isSignedDataType(int dataType) {
 		switch(dataType){
 			case SQLTokenizer.SMALLINT:
@@ -98,13 +46,9 @@ public class SSResultSetMetaData implements ResultSetMetaData {
 		}
 		return false;
 	}
-	
-    
 	static boolean isNumberDataType(int dataType) {
 		return isSignedDataType(dataType) || dataType == SQLTokenizer.TINYINT;
 	}
-	
-    
 	static boolean isBinaryDataType(int dataType) {
 		switch(dataType){
 			case SQLTokenizer.BINARY:
@@ -115,14 +59,12 @@ public class SSResultSetMetaData implements ResultSetMetaData {
 		}
 		return false;
 	}
-	
-	
 	static int getDisplaySize(int dataType, int precision, int scale){
 		switch(dataType){
 			case SQLTokenizer.BIT:
-				return 1; // 1 and 0
+				return 1; 
 			case SQLTokenizer.BOOLEAN:
-				return 5; //true and false
+				return 5; 
 			case SQLTokenizer.TINYINT:
 				return 3;
 			case SQLTokenizer.SMALLINT:
@@ -156,8 +98,6 @@ public class SSResultSetMetaData implements ResultSetMetaData {
 				return precision;
 		}
 	}
-	
-    
 	static int getDataTypePrecision(int dataType, int defaultValue){
 		switch(dataType){
 			case SQLTokenizer.NULL:
@@ -213,8 +153,6 @@ public class SSResultSetMetaData implements ResultSetMetaData {
 			throw new Error("Precision:"+SQLTokenizer.getKeyWord(dataType));
 		return defaultValue;
 	}
-	
-	
     public int getColumnDisplaySize(int column) throws SQLException {
         return getColumnExpression( column ).getDisplaySize();
     }
@@ -288,43 +226,27 @@ public class SSResultSetMetaData implements ResultSetMetaData {
             case Types.CHAR:
             case Types.VARCHAR:
             case Types.LONGVARCHAR:
-            case -11: //uniqueidentifier
+            case -11: 
                     return "java.lang.String";
             case Types.CLOB:
                     return "java.sql.Clob";
             default: return "java.lang.Object";
         }
     }
-
-/*========================================================
-
-private methods
-
-=========================================================*/
-
 	final int getColumnIdx( int column ) throws SQLException{
 		if(column < 1 || column > columns.size())
 			throw SmallSQLException.create( Language.COL_IDX_OUT_RANGE, String.valueOf(column));
 		return column-1;
 	}
-
     final Expression getColumnExpression( int column ) throws SQLException{
         return columns.get( getColumnIdx( column ) );
     }
-
-
 	@Override
 	public <T> T unwrap(Class<T> iface) throws SQLException {
-		// TODO Auto-generated method stub
 		return null;
 	}
-
-
 	@Override
 	public boolean isWrapperFor(Class<?> iface) throws SQLException {
-		// TODO Auto-generated method stub
 		return false;
 	}
-
-
 }

@@ -1,58 +1,15 @@
-/* =============================================================
- * SmallSQL : a free Java DBMS library for the Java(tm) platform
- * =============================================================
- *
- * (C) Copyright 2004-2007, by Volker Berlin.
- *
- * Project Info:  http://www.smallsql.de/
- *
- * This library is free software; you can redistribute it and/or modify it 
- * under the terms of the GNU Lesser General Public License as published by 
- * the Free Software Foundation; either version 2.1 of the License, or 
- * (at your option) any later version.
- *
- * This library is distributed in the hope that it will be useful, but 
- * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY 
- * or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public 
- * License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public
- * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, 
- * USA.  
- *
- * [Java is a trademark or registered trademark of Sun Microsystems, Inc. 
- * in the United States and other countries.]
- *
- * ---------------
- * ExpressionValue.java
- * ---------------
- * Author: Volker Berlin
- * 
- */
 package smallsql.database;
-
 import java.math.BigDecimal;
 import java.sql.*;
 import smallsql.database.language.Language;
-
 public class ExpressionValue extends Expression {
-
     private Object value;
     private int dataType;
 	private int length;
-
-    /**
-     * Constructor is used from PreparedStatement parameters ( '?' in sql expression )
-     */
     ExpressionValue(){
 		super(VALUE);
         clear();
     }
-
-	/**
-	 * Constructor is used from Constructor GroupResult
-	 */
 	ExpressionValue(int type){
 		super(type);
 		switch(type){
@@ -64,7 +21,6 @@ public class ExpressionValue extends Expression {
 				break;
 			case MIN:
 			case MAX:
-				// set value to null
 				break;
 			case COUNT:
 				value = new MutableInteger(0);
@@ -73,21 +29,11 @@ public class ExpressionValue extends Expression {
 			default: throw new Error();
 		}
 	}
-	
-
-    /**
-     * Constructor for static Expression i.e. 0x23, 67, 23.8, 'qwert'
-     */
     ExpressionValue(Object value, int dataType ){
 		super(VALUE);
         this.value      = value;
         this.dataType   = dataType;
     }
-    
-
-	/**
-	 * Is used in GroupResult.
-	 */
 	public boolean equals(Object expr){
 		if(!super.equals(expr)) return false;
 		if(!(expr instanceof ExpressionValue)) return false;
@@ -96,14 +42,6 @@ public class ExpressionValue extends Expression {
 		if(value == null) return false;
 		return value.equals(v);
 	}
-
-	
-/*==============================================================================
-methods for Grouping
-==============================================================================*/
-	/**
-	 * Accumulate the value of the expression to this aggregate function value. 
-	 */
     void accumulate(Expression expr) throws Exception{
 		int type = getType();
 		if(type != GROUP_BY) expr = expr.getParams()[0];
@@ -177,7 +115,7 @@ methods for Grouping
 						case SQLTokenizer.VARCHAR:
 						case SQLTokenizer.LONGVARCHAR:
 							String str = expr.getString();
-							if(String.CASE_INSENSITIVE_ORDER.compare( (String)value, str ) < 0) //cast needed for Compiler 1.5
+							if(String.CASE_INSENSITIVE_ORDER.compare( (String)value, str ) < 0) 
 								value = str;
 							break;
 						case SQLTokenizer.NUMERIC:
@@ -196,8 +134,6 @@ methods for Grouping
 							((DateTime)value).time = Math.max( ((DateTime)value).time, expr.getLong());
 							break;
 						case SQLTokenizer.UNIQUEIDENTIFIER:
-							// uuid are fixed-len uppercase hex strings and can be correctly 
-							// compared with compareTo()
 							String uuidStr = expr.getString();
 							if (uuidStr.compareTo( (String)value) > 0) value = uuidStr;
 							break;
@@ -234,7 +170,7 @@ methods for Grouping
 						case SQLTokenizer.VARCHAR:
 						case SQLTokenizer.LONGVARCHAR:
 							String str = expr.getString();
-							if(String.CASE_INSENSITIVE_ORDER.compare( (String)value, str ) > 0) //cast needed for Compiler 1.5
+							if(String.CASE_INSENSITIVE_ORDER.compare( (String)value, str ) > 0) 
 								value = str;
 							break;
 						case SQLTokenizer.NUMERIC:
@@ -259,13 +195,6 @@ methods for Grouping
 			default: throw new Error();
 		}
 	}
-
-    
-    /**
-     * Init a summary field with a Mutable 
-     * @param expr the expression that produce the values which should be summary
-     * @throws Exception
-     */
 	private void initValue(Expression expr) throws Exception{
 		dataType = expr.getDataType();
 		switch(dataType){
@@ -299,36 +228,20 @@ methods for Grouping
 				value = new DateTime(expr.getLong(), dataType);
 				break;
 			default: 
-				// is used for MAX and MIN
 				value = expr.getObject();
 		}
 	}
-/*==============================================================================
-methods for PreparedStatement parameters
-==============================================================================*/
     private static final Object EMPTY = new Object();
     final boolean isEmpty(){
         return value == EMPTY;
     }
-
     final void clear(){
         value = EMPTY;
     }
-    
-
 	final void set( Object value, int _dataType, int length ) throws SQLException{
 		set( value, _dataType );
 		this.length = length;
 	}
-	
-	
-    /**
-     * 
-     * @param newValue The new Value.
-     * @param newDataType The data type of the new Value (One of the SQLTokenizer const). 
-     * If the type is -1 then the data type is verify with many instanceof expressions.
-     * @throws SQLException If the newValue is not a instance of a know class. 
-     */
     final void set( Object newValue, int newDataType ) throws SQLException{
         this.value      = newValue;
         this.dataType   = newDataType;
@@ -377,26 +290,17 @@ methods for PreparedStatement parameters
                 throw SmallSQLException.create(Language.PARAM_CLASS_UNKNOWN, newValue.getClass().getName());
         }
     }
-    
-
     final void set(ExpressionValue val){
     	this.value 		= val.value;
     	this.dataType	= val.dataType;
     	this.length		= val.length;
     }
-/*==============================================================================
-overriden abstact methods extends from expression
-==============================================================================*/
-
-
     boolean isNull(){
         return getObject() == null;
     }
-
     boolean getBoolean() throws Exception{
 		return getBoolean( getObject(), dataType );
     }
-	
 	static boolean getBoolean(Object obj, int dataType) throws Exception{
         if(obj == null) return false;
         switch(dataType){
@@ -415,11 +319,9 @@ overriden abstact methods extends from expression
             default: return Utils.string2boolean( obj.toString() );
         }
     }
-
     int getInt() throws Exception{
 		return getInt( getObject(), dataType );
     }
-	
 	static int getInt(Object obj, int dataType) throws Exception{
         if(obj == null) return 0;
         switch(dataType){
@@ -446,15 +348,13 @@ overriden abstact methods extends from expression
 				String str = obj.toString().trim();
 				try{
 					return Integer.parseInt( str );
-				}catch(Throwable th){/* A NumberFormatException can occur if it a floating point number */}
+				}catch(Throwable th){}
 				return (int)Double.parseDouble( str );
         }
     }
-
     long getLong() throws Exception{
     	return getLong( getObject(), dataType);
     }
-    
 	static long getLong(Object obj, int dataType) throws Exception{
        if(obj == null) return 0;
         switch(dataType){
@@ -484,11 +384,9 @@ overriden abstact methods extends from expression
 				}
         }
     }
-
     float getFloat() throws Exception{
 		return getFloat( getObject(), dataType);
     }
-	
 	static float getFloat(Object obj, int dataType) throws Exception{
         if(obj == null) return 0;
         switch(dataType){
@@ -509,11 +407,9 @@ overriden abstact methods extends from expression
             default: return Float.parseFloat( obj.toString() );
         }
     }
-
     double getDouble() throws Exception{
 		return getDouble( getObject(), dataType);
     }
-	
 	static double getDouble(Object obj, int dataType) throws Exception{
         if(obj == null) return 0;
         switch(dataType){
@@ -532,13 +428,9 @@ overriden abstact methods extends from expression
             default: return Double.parseDouble( obj.toString() );
         }
     }
-
-
     long getMoney() throws Exception{
 		return getMoney( getObject(), dataType );
     }
-
-
     static long getMoney(Object obj, int dataType) throws Exception{
         if(obj == null) return 0;
         switch(dataType){
@@ -559,13 +451,9 @@ overriden abstact methods extends from expression
             default: return Money.parseMoney( obj.toString() );
         }
 	}
-
-
     MutableNumeric getNumeric(){
 		return getNumeric( getObject(), dataType );
     }
-
-
     static MutableNumeric getNumeric(Object obj, int dataType){
         if(obj == null) return null;
         switch(dataType){
@@ -597,15 +485,12 @@ overriden abstact methods extends from expression
             default: return new MutableNumeric( obj.toString() );
         }
 	}
-
-
     Object getObject(){
         if(isEmpty()){
             return null;
         }
         return value;
     }
-
     String getString(){
         Object obj = getObject();
         if(obj == null) return null;
@@ -614,12 +499,9 @@ overriden abstact methods extends from expression
         }
         return obj.toString();
     }
-
     byte[] getBytes() throws Exception{
     	return getBytes( getObject(), dataType);
     }
-    
-    
 	static byte[] getBytes(Object obj, int dataType) throws Exception{
 		if(obj == null) return null;
 		switch(dataType){
@@ -643,23 +525,12 @@ overriden abstact methods extends from expression
 			default: throw createUnsupportedConversion(dataType, obj, SQLTokenizer.VARBINARY);
 		}
 	}
-    
-    
-
     final int getDataType(){
         return dataType;
     }
-
-	/*=======================================================================
-	 
-		Methods for ResultSetMetaData
-	 
-	=======================================================================*/
-
 	String getTableName(){
 		return null;
 	}
-
 	final int getPrecision(){
 		switch(dataType){
 			case SQLTokenizer.VARCHAR:
@@ -672,8 +543,6 @@ overriden abstact methods extends from expression
 				return super.getPrecision();
 		}
 	}
-	
-	
 	int getScale(){
 		switch(dataType){
 			case SQLTokenizer.DECIMAL:
@@ -684,17 +553,12 @@ overriden abstact methods extends from expression
 				return getScale(dataType);
 		}
 	}
-	
-
 	static SQLException createUnsupportedConversion( int fromDataType, Object obj, int toDataType ){
 		Object[] params = {
 			SQLTokenizer.getKeyWord(fromDataType),
 			obj,
 			SQLTokenizer.getKeyWord(toDataType)
 		};
-		
         return SmallSQLException.create(Language.UNSUPPORTED_CONVERSION, params);
     }
-
-
 }

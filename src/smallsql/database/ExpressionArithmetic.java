@@ -1,59 +1,18 @@
-/* =============================================================
- * SmallSQL : a free Java DBMS library for the Java(tm) platform
- * =============================================================
- *
- * (C) Copyright 2004-2007, by Volker Berlin.
- *
- * Project Info:  http://www.smallsql.de/
- *
- * This library is free software; you can redistribute it and/or modify it 
- * under the terms of the GNU Lesser General Public License as published by 
- * the Free Software Foundation; either version 2.1 of the License, or 
- * (at your option) any later version.
- *
- * This library is distributed in the hope that it will be useful, but 
- * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY 
- * or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public 
- * License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public
- * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, 
- * USA.  
- *
- * [Java is a trademark or registered trademark of Sun Microsystems, Inc. 
- * in the United States and other countries.]
- *
- * ---------------
- * ExpressionArithmethic.java
- * ---------------
- * Author: Volker Berlin
- * 
- */
 package smallsql.database;
-
 import java.sql.*;
 import smallsql.database.language.Language;
-
-
 public class ExpressionArithmetic extends Expression {
-
     private Expression left;
     private Expression right;
     private Expression right2;
     private Expression[] inList;
     final private int operation;
-
-    /**
-     * Constructor for NOT, NEGATIVE, BIT_NOT, ISNULL and ISNOTNULL
-     */
     ExpressionArithmetic( Expression left, int operation){
     	super(FUNCTION);
         this.left  = left;
         this.operation = operation;
         super.setParams( new Expression[]{ left });
     }
-
     ExpressionArithmetic( Expression left, Expression right, int operation){
 		super(FUNCTION);
         this.left   = left;
@@ -61,10 +20,6 @@ public class ExpressionArithmetic extends Expression {
         this.operation = operation;
         super.setParams( new Expression[]{ left, right });
     }
-
-    /**
-     * Constructor for BETWEEN
-     */
     ExpressionArithmetic( Expression left, Expression right, Expression right2, int operation){
 		super(FUNCTION);
         this.left   = left;
@@ -73,10 +28,6 @@ public class ExpressionArithmetic extends Expression {
         this.operation = operation;
         super.setParams( new Expression[]{ left, right, right2 });
     }
-    
-    /**
-     * Constructor for IN
-     */
     ExpressionArithmetic( Expression left, Expressions inList, int operation){
 		super(FUNCTION);
         this.left   = left;
@@ -88,22 +39,13 @@ public class ExpressionArithmetic extends Expression {
 	        params[0] = left;
 	        System.arraycopy(this.inList, 0, params, 1, this.inList.length);
         }else{
-            //Occur with ExpressionInSelect, in this case the method isInList() is overridden
 			params = new Expression[]{ left };
         }
         super.setParams( params );
     }
-    
-    
-    /**
-     * Get the arithmetic operation of this expression.
-     * @return
-     */
     int getOperation(){
         return operation;
     }
-      
-    
     private Expression convertExpressionIfNeeded( Expression expr, Expression other ){
         if(expr == null || other == null){
             return expr;
@@ -135,8 +77,6 @@ public class ExpressionArithmetic extends Expression {
         }
         return expr;
     }
-    
-
 	final void setParamAt( Expression param, int idx){
 		switch(idx){
 			case 0:
@@ -158,20 +98,12 @@ public class ExpressionArithmetic extends Expression {
 		}
 		super.setParamAt( param, idx );
 	}
-
-
-	/**
-	 * Is used in GroupResult.
-	 */
 	public boolean equals(Object expr){
 		if(!super.equals(expr)) return false;
 		if(!(expr instanceof ExpressionArithmetic)) return false;
 		if( ((ExpressionArithmetic)expr).operation != operation) return false;
 		return true;
 	}
-
-
-	
     int getInt() throws java.lang.Exception {
         if(isNull()) return 0;
         int dataType = getDataType();
@@ -193,15 +125,10 @@ public class ExpressionArithmetic extends Expression {
             case SQLTokenizer.SMALLMONEY:
             case SQLTokenizer.NUMERIC:
             case SQLTokenizer.DECIMAL:
-            	// FIXME: bug! if get returns a number outside of
-            	// integer interval, it's not rounded to max/min, 
-            	// instead it returns a wrong value
                 return (int)getDoubleImpl();
         }
         throw createUnspportedConversion( SQLTokenizer.INT);
     }
-    
-    
     private int getIntImpl() throws java.lang.Exception {
         switch(operation){
             case ADD:       return left.getInt() + right.getInt();
@@ -214,8 +141,6 @@ public class ExpressionArithmetic extends Expression {
         }
         throw createUnspportedConversion( SQLTokenizer.INT);
     }
-    
-    
 	long getLong() throws java.lang.Exception {
         if(isNull()) return 0;
         int dataType = getDataType();
@@ -241,8 +166,6 @@ public class ExpressionArithmetic extends Expression {
         }
 		throw createUnspportedConversion( SQLTokenizer.LONG);
     }
-	
-	
 	private long getLongImpl() throws java.lang.Exception {
         if(isNull()) return 0;
         switch(operation){
@@ -256,8 +179,6 @@ public class ExpressionArithmetic extends Expression {
         }
 		throw createUnspportedConversion( SQLTokenizer.LONG);
     }
-	
-	
     double getDouble() throws java.lang.Exception {
         if(isNull()) return 0;
         int dataType = getDataType();
@@ -283,15 +204,11 @@ public class ExpressionArithmetic extends Expression {
         }
 		throw createUnspportedConversion( SQLTokenizer.DOUBLE);
     }
-	
-	
     private double getDoubleImpl() throws java.lang.Exception{
 		if(operation == NEGATIVE)
 			return getDoubleImpl(0, left.getDouble());
 		return getDoubleImpl(left.getDouble(), right.getDouble());
 	}
-	
-	
     private double getDoubleImpl( double lVal, double rVal) throws java.lang.Exception{
         switch(operation){
             case ADD: return lVal + rVal;
@@ -303,8 +220,6 @@ public class ExpressionArithmetic extends Expression {
         }
         throw createUnspportedConversion( SQLTokenizer.DOUBLE);
     }
-	
-
     float getFloat() throws java.lang.Exception {
         if(isNull()) return 0;
         int dataType = getDataType();
@@ -330,8 +245,6 @@ public class ExpressionArithmetic extends Expression {
         }
 		throw createUnspportedConversion( SQLTokenizer.DOUBLE);
     }
-    
-    
     private float getFloatImpl() throws java.lang.Exception {
         switch(operation){
             case ADD: return left.getFloat() + right.getFloat();
@@ -343,8 +256,6 @@ public class ExpressionArithmetic extends Expression {
         }
         throw createUnspportedConversion( SQLTokenizer.REAL );
     }
-    
-    
     long getMoney() throws java.lang.Exception {
         if(isNull()) return 0;
         int dataType = getDataType();		
@@ -371,8 +282,6 @@ public class ExpressionArithmetic extends Expression {
         }
 		throw createUnspportedConversion( SQLTokenizer.DOUBLE);
     }
-    
-
     private long getMoneyImpl() throws java.lang.Exception {
         switch(operation){
             case ADD: return left.getMoney() + right.getMoney();
@@ -383,8 +292,6 @@ public class ExpressionArithmetic extends Expression {
         }
         throw createUnspportedConversion( SQLTokenizer.MONEY );
     }
-    
-
     MutableNumeric getNumeric() throws java.lang.Exception {
         if(isNull()) return null;
         int dataType = getDataType();		
@@ -412,8 +319,6 @@ public class ExpressionArithmetic extends Expression {
         }
 		throw createUnspportedConversion( SQLTokenizer.DOUBLE);
     }
-    
-    
     private MutableNumeric getNumericImpl() throws java.lang.Exception {
         switch(operation){
             case ADD: 
@@ -469,8 +374,6 @@ public class ExpressionArithmetic extends Expression {
             default:    throw createUnspportedConversion( SQLTokenizer.NUMERIC );
         }
     }
-    
-    
     Object getObject() throws java.lang.Exception {
         if(isNull()) return null;
         int dataType = getDataType();
@@ -507,7 +410,6 @@ public class ExpressionArithmetic extends Expression {
             		return getString( left.getString(), right.getString() );
             case SQLTokenizer.JAVA_OBJECT:
                     Object lObj = left.getObject();
-                    //FIXME NullPointerException bei NEGATIVE
                     Object rObj = right.getObject();
                     if(lObj instanceof Number && rObj instanceof Number)
                         return new Double( getDoubleImpl( ((Number)lObj).doubleValue(), ((Number)rObj).doubleValue() ) );
@@ -525,8 +427,6 @@ public class ExpressionArithmetic extends Expression {
             default: throw createUnspportedDataType();
         }
     }
-    
-    
     boolean getBoolean() throws java.lang.Exception {
         switch(operation){
         	case OR:    return left.getBoolean() || right.getBoolean();
@@ -558,7 +458,6 @@ public class ExpressionArithmetic extends Expression {
 						case EQUALS:    return left.getBoolean() == right.getBoolean();
 						case UNEQUALS:  return left.getBoolean() != right.getBoolean();
 					}
-					//break; interpret it as BIT 
             case SQLTokenizer.TINYINT:
             case SQLTokenizer.SMALLINT:
             case SQLTokenizer.INT:
@@ -716,22 +615,16 @@ public class ExpressionArithmetic extends Expression {
         }
         throw createUnspportedDataType();
     }
-    
-    
     String getString() throws java.lang.Exception {
         if(isNull()) return null;
         return getObject().toString();
     }
-    
-    
     final private String getString( String lVal, String rVal ) throws java.lang.Exception {
         switch(operation){
             case ADD: return lVal + rVal;
         }
         throw createUnspportedConversion( SQLTokenizer.VARCHAR );
     }
-
-    
     int getDataType() {
         switch(operation){
             case NEGATIVE:
@@ -756,8 +649,6 @@ public class ExpressionArithmetic extends Expression {
             	return getDataType(left, right);
         }
     }
-	
-	
 	int getScale(){
 		int dataType = getDataType();
 		switch(dataType){
@@ -779,8 +670,6 @@ public class ExpressionArithmetic extends Expression {
 		}
 		return getScale(dataType);
 	}
-
-    
     boolean isNull() throws Exception{
         switch(operation){
 	        case OR:
@@ -790,20 +679,16 @@ public class ExpressionArithmetic extends Expression {
 	        case ISNULL:
 			case ISNOTNULL:
 			case IN:
-							return false; //Boolean operations return ever a result ???, but at least ISNULL and ISNOTNULL
+							return false; 
             case NEGATIVE: 
             case BIT_NOT:
                            return                  left.isNull();
             default:       return left.isNull() || right.isNull();
         }
     }
-
-
     byte[] getBytes() throws java.lang.Exception {
         throw createUnspportedConversion( SQLTokenizer.BINARY );
     }
-    
-    
     boolean isInList() throws Exception{
     	if(left.isNull()) return false;
     	try{
@@ -816,8 +701,6 @@ public class ExpressionArithmetic extends Expression {
     	}
     	return false;
     }
-
-    
     SQLException createUnspportedDataType(){
     	Object[] params = {
     			SQLTokenizer.getKeyWord(getDataType(left, right)),
@@ -825,8 +708,6 @@ public class ExpressionArithmetic extends Expression {
     	};
         return SmallSQLException.create(Language.UNSUPPORTED_DATATYPE_OPER, params);
     }
-
-    
     SQLException createUnspportedConversion( int dataType ){
         int type = left == null ? right.getDataType() : getDataType(left, right);
         Object[] params = new Object[] {
@@ -836,8 +717,6 @@ public class ExpressionArithmetic extends Expression {
         };
         return SmallSQLException.create(Language.UNSUPPORTED_CONVERSION_OPER, params);
     }
-    
-    
     void optimize() throws SQLException{
         super.optimize();
         Expression[] params = getParams();
@@ -845,17 +724,10 @@ public class ExpressionArithmetic extends Expression {
             return;
         }
         setParamAt( convertExpressionIfNeeded( params[0], params[1] ), 0 );
-        
         for(int p=1; p<params.length; p++){
             setParamAt( convertExpressionIfNeeded( params[p], left ), p );
         }
     }
-    
-    /**
-     * This method only for creating an error message. Thats there is no optimizing.
-     * @param value
-     * @return
-     */
     private static String getKeywordFromOperation(int operation){
     	int token = 0;
     	for(int i=1; i<1000; i++){
@@ -870,8 +742,6 @@ public class ExpressionArithmetic extends Expression {
     	if(keyword == null) keyword = "" + (char)token;
     	return keyword;
     }
-
-    
     static int getOperationFromToken( int value ){
         switch(value){
             case SQLTokenizer.PLUS:         return ADD;
@@ -899,27 +769,11 @@ public class ExpressionArithmetic extends Expression {
             default:                        return 0;
         }
     }
-    
-    
-	/**
-	 * Returns the higher level data type from 2 expressions. 
-	 */
     static int getDataType(Expression left, Expression right){
 		int typeLeft  = left.getDataType();
 		int typeRight = right.getDataType();
 		return getDataType( typeLeft, typeRight);
     }
-    
-
-	/**
-	 * Return the best data type for a complex number operation. This method return only 
-	 * SQLTokenizer.INT,
-	 * SQLTokenizer.BIGINT,
-	 * SQLTokenizer.MONEY,
-	 * SQLTokenizer.DECIMAL or
-	 * SQLTokenizer.DOUBLE.
-	 * @param paramDataType
-	 */
 	static int getBestNumberDataType(int paramDataType){
 		int dataTypeIdx = Utils.indexOf( paramDataType, DatatypeRange);
 		if(dataTypeIdx >= NVARCHAR_IDX)
@@ -934,46 +788,37 @@ public class ExpressionArithmetic extends Expression {
 			return SQLTokenizer.DECIMAL;
 		return SQLTokenizer.DOUBLE;
 	}
-	
-    /**
-     * Returns the higher level data type from 2 data types. 
-     */
 	static int getDataType(int typeLeft, int typeRight){
 		if(typeLeft == typeRight) return typeLeft;
-
 		int dataTypeIdx = Math.min( Utils.indexOf( typeLeft, DatatypeRange), Utils.indexOf( typeRight, DatatypeRange) );
 		if(dataTypeIdx < 0) throw new Error("getDataType(): "+typeLeft+", "+typeRight);
 		return DatatypeRange[ dataTypeIdx ];
     }
-	
-
-    // value decade is the operation order
-    static final int OR         = 11; // OR
-    static final int AND        = 21; // AND
-    static final int NOT        = 31; // NOT
-    static final int BIT_OR     = 41; // |
-    static final int BIT_AND    = 42; // &
-    static final int BIT_XOR    = 43; // ^
-    static final int EQUALS     = 51; // =
-	static final int EQUALS_NULL= 52; // like Equals but (null = null) --> true 
-    static final int GREATER    = 53; // >
-    static final int GRE_EQU    = 54; // >=
-    static final int LESSER     = 55; // <
-    static final int LES_EQU    = 56; // <=
-    static final int UNEQUALS   = 57; // <>
-	static final int IN         = 61; // IN
-	static final int BETWEEN    = 62; // BETWEEN
-	static final int LIKE       = 63; // LIKE
-	static final int ISNULL     = 64; // IS NULL
-	static final int ISNOTNULL  = ISNULL+1; // IS NOT NULL 
-    static final int ADD        = 71; // +
-    static final int SUB        = 72; // -
-    static final int MUL        = 81; // *
-    static final int DIV        = 82; // /
-    static final int MOD        = 83; // %
-    static final int BIT_NOT    = 91; // ~
-    static final int NEGATIVE   =101; // -
-
+    static final int OR         = 11; 
+    static final int AND        = 21; 
+    static final int NOT        = 31; 
+    static final int BIT_OR     = 41; 
+    static final int BIT_AND    = 42; 
+    static final int BIT_XOR    = 43; 
+    static final int EQUALS     = 51; 
+	static final int EQUALS_NULL= 52; 
+    static final int GREATER    = 53; 
+    static final int GRE_EQU    = 54; 
+    static final int LESSER     = 55; 
+    static final int LES_EQU    = 56; 
+    static final int UNEQUALS   = 57; 
+	static final int IN         = 61; 
+	static final int BETWEEN    = 62; 
+	static final int LIKE       = 63; 
+	static final int ISNULL     = 64; 
+	static final int ISNOTNULL  = ISNULL+1; 
+    static final int ADD        = 71; 
+    static final int SUB        = 72; 
+    static final int MUL        = 81; 
+    static final int DIV        = 82; 
+    static final int MOD        = 83; 
+    static final int BIT_NOT    = 91; 
+    static final int NEGATIVE   =101; 
     private static final int[] DatatypeRange = {
         SQLTokenizer.TIMESTAMP,
         SQLTokenizer.SMALLDATETIME,
@@ -1005,8 +850,6 @@ public class ExpressionArithmetic extends Expression {
         SQLTokenizer.LONGVARBINARY,
         SQLTokenizer.BLOB,
     	SQLTokenizer.NULL};
-
-	
 	private static int NVARCHAR_IDX = Utils.indexOf( SQLTokenizer.NVARCHAR, DatatypeRange);
 	private static int INT_IDX = Utils.indexOf( SQLTokenizer.INT, DatatypeRange);
 	private static int BIGINT_IDX = Utils.indexOf( SQLTokenizer.BIGINT, DatatypeRange);

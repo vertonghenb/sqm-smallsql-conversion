@@ -1,23 +1,10 @@
-/*
- * Created on 12.06.2006
- */
 package smallsql.tools;
-
 import java.io.*;
 import java.sql.*;
 import java.util.Properties;
-
 import javax.swing.JOptionPane;
-
 import smallsql.database.*;
-
-
-/**
- * @author Volker Berlin
- */
 public class CommandLine {
-
-
     public static void main(String[] args) throws Exception {
         System.out.println("SmallSQL Database command line tool\n");
         Connection con = new SSDriver().connect("jdbc:smallsql", new Properties());
@@ -30,7 +17,6 @@ public class CommandLine {
         System.out.println();
         System.out.println("\tUse the USE command to change the database context.");
         System.out.println("\tType 2 times ENTER to execute any SQL command.");
-        
         StringBuffer command = new StringBuffer();
         BufferedReader input = new BufferedReader(new InputStreamReader(System.in));
         while(true){
@@ -44,7 +30,7 @@ public class CommandLine {
                     return;
                 }
                 if(line == null){
-                    return; //end of program
+                    return; 
                 }
                 if(line.length() == 0 && command.length() > 0){
                     boolean isRS = st.execute(command.toString());
@@ -59,10 +45,7 @@ public class CommandLine {
                 e.printStackTrace();
             }
         }
-        
     }
-    
-
     private static void printRS(ResultSet rs) throws SQLException {
         ResultSetMetaData md = rs.getMetaData();
         int count = md.getColumnCount();

@@ -1,55 +1,16 @@
-/* =============================================================
- * SmallSQL : a free Java DBMS library for the Java(tm) platform
- * =============================================================
- *
- * (C) Copyright 2004-2006, by Volker Berlin.
- *
- * Project Info:  http://www.smallsql.de/
- *
- * This library is free software; you can redistribute it and/or modify it 
- * under the terms of the GNU Lesser General Public License as published by 
- * the Free Software Foundation; either version 2.1 of the License, or 
- * (at your option) any later version.
- *
- * This library is distributed in the hope that it will be useful, but 
- * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY 
- * or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public 
- * License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public
- * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, 
- * USA.  
- *
- * [Java is a trademark or registered trademark of Sun Microsystems, Inc. 
- * in the United States and other countries.]
- *
- * ---------------
- * TestMoneyRounding.java
- * ---------------
- * Author: Volker Berlin
- * 
- */
 package smallsql.junit;
-
 import junit.framework.*;
-
 import java.math.BigDecimal;
 import java.sql.*;
-
 import smallsql.database.Money;
-
 public class TestMoneyRounding extends TestCase{
-
     static final String table = "TestMoneyRounding";
-
     public void setUp() throws SQLException{
         tearDown();
 		Connection con = AllTests.getConnection();
 		Statement st = con.createStatement();
 		st.execute("create table " + table + "(a money, b smallmoney)");
     }
-
     public void tearDown(){
         try{
             Connection con = AllTests.getConnection();
@@ -57,10 +18,8 @@ public class TestMoneyRounding extends TestCase{
             st.execute("drop table " + table);
             st.close();
         }catch(Throwable e){
-            //e.printStackTrace();
         }
     }
-
     public void testMoney1() throws Exception{
             Connection con = AllTests.getConnection();
             Statement st = con.createStatement();
@@ -71,8 +30,6 @@ public class TestMoneyRounding extends TestCase{
             st.close();
             verify(firstValue);
     }
-    
-    
     private void verify(int firstValue) throws Exception{
 		Connection con = AllTests.getConnection();
 		Statement st = con.createStatement();
@@ -96,8 +53,6 @@ public class TestMoneyRounding extends TestCase{
 		}
 		st.close();
     }
-    
-    
 	public void testMoney2() throws Exception{
 			Connection con = AllTests.getConnection();
 			Statement st = con.createStatement();
@@ -108,5 +63,4 @@ public class TestMoneyRounding extends TestCase{
 			st.close();
 			verify(firstValue);
 	}
-    
 }

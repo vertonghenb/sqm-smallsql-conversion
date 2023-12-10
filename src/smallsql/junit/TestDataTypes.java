@@ -1,43 +1,8 @@
-/* =============================================================
- * SmallSQL : a free Java DBMS library for the Java(tm) platform
- * =============================================================
- *
- * (C) Copyright 2004-2007, by Volker Berlin.
- *
- * Project Info:  http://www.smallsql.de/
- *
- * This library is free software; you can redistribute it and/or modify it 
- * under the terms of the GNU Lesser General Public License as published by 
- * the Free Software Foundation; either version 2.1 of the License, or 
- * (at your option) any later version.
- *
- * This library is distributed in the hope that it will be useful, but 
- * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY 
- * or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public 
- * License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public
- * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, 
- * USA.  
- *
- * [Java is a trademark or registered trademark of Sun Microsystems, Inc. 
- * in the United States and other countries.]
- *
- * ---------------
- * TestDataTypes.java
- * ---------------
- * Author: Volker Berlin
- * 
- */
 package smallsql.junit;
-
 import junit.framework.*;
 import java.sql.*;
 import java.math.*;
-
 public class TestDataTypes extends BasicTestCase{
-
     static final String[] DATATYPES = { "varchar(100)",
                                                 "varchar2(130)", "nvarchar(137)", "nvarchar2(137)", "sysname",
                                                 "char(100)", "CHARACTER(99)",
@@ -55,16 +20,12 @@ public class TestDataTypes extends BasicTestCase{
                                                 "numeric(28,4)", "decimal(29,4)","number(29,4)", "varnum(29,4)",
                                                 "COUNTER",
                                                 "money", "smallmoney"};
-
     private static final String table = "table_datatypes";
-
     private String datatype;
-
     TestDataTypes( String datatype ){
         super( datatype );
         this.datatype = datatype;
     }
-
     public void tearDown(){
         try{
             Connection con = AllTests.getConnection();
@@ -72,26 +33,21 @@ public class TestDataTypes extends BasicTestCase{
             st.execute("drop table " + table);
             st.close();
         }catch(Throwable e){
-            //e.printStackTrace();
         }
     }
-
     public void setUp(){
         tearDown();
     }
-
     public void runTest() throws Throwable {
         Connection con = AllTests.getConnection();
         Statement st = con.createStatement();
         st.execute("Create Table " + table +"(abc " + datatype + ")");
         String name = "abc";
-
         Object[] values = null;
         String   quote = "";
         String escape1 = "";
         String escape2 = "";
         boolean needTrim = false;
-
         ResultSet rs = st.executeQuery("SELECT * From " + table);
 		ResultSetMetaData md = rs.getMetaData();
         switch(md.getColumnType(1)){
@@ -125,10 +81,8 @@ public class TestDataTypes extends BasicTestCase{
             case Types.NUMERIC:
             case Types.DECIMAL:
                 needTrim = true;
-            	if(md.getPrecision(1)<16){//smallmoney
+            	if(md.getPrecision(1)<16){
 					values = new Object[]{null,new BigDecimal("0.0"), new BigDecimal("-2"), new BigDecimal("-12.123")};
-                /*if(rs.getMetaData().isCurrency(1)){
-                    values = new Object[]{null, new Money(0.0), new Money(-12.123), new Money(202812.9)};*/
                 }else{
                     values = new Object[]{null,new BigDecimal("0.0"), new BigDecimal("-2"), new BigDecimal("-12.123"), new BigDecimal("22812345234.9")};
                 }
@@ -150,7 +104,7 @@ public class TestDataTypes extends BasicTestCase{
 			case Types.TIMESTAMP:
 				if(md.getPrecision(1) >16)
 					values = new Object[]{null, new Timestamp(10,10,1, 10,17,56, 0), new Timestamp(0,0,1, 0,0,0, 0),new Timestamp( 120,1,1, 23,59,59, 500000000),new Timestamp(0),new Timestamp( -120,1,1, 23,59,59, 500000000)};
-				else//smalldatetime
+				else
 					values = new Object[]{null, new Timestamp(10,10,1, 10,17,0, 0), new Timestamp(0,0,1, 0,0,0, 0),new Timestamp(0)};
 				escape1 = "{ts '";
 				escape2 = "'}";
@@ -165,19 +119,16 @@ public class TestDataTypes extends BasicTestCase{
             case Types.JAVA_OBJECT:
                 values = new Object[]{null, new Integer(-123), new Double(1.2), new byte[]{1, 127, -23}};
                 break;
-            case -11: //UNIQUEIDENTIFER
+            case -11: 
                 values = new Object[]{null, "342734E3-D9AC-408F-8724-B7A257C4529E", "342734E3-D9AC-408F-8724-B7A257C4529E"};
                 quote  = "\'";
                 break;
             default: fail("Unknown column type: " + rs.getMetaData().getColumnType(1));
         }
         rs.close();
-		
-		// remove all resource for reloading the tables from file
 		con.close();
 		con = AllTests.getConnection();
 		st = con.createStatement();
-
         for(int i=0; i<values.length; i++){
             Object val = values[i];
             String q = (val == null) ? "" : quote;
@@ -194,7 +145,6 @@ public class TestDataTypes extends BasicTestCase{
             st.execute("Insert into " + table + "(abc) Values(" + e1 + q + val + q + e2 + ")");
         }
 		checkValues( st, values, needTrim);
-		
 		st.execute("Delete From "+ table);
 		CallableStatement cal = con.prepareCall("Insert Into " + table + "(abc) Values(?)");
         for(int i=0; i<values.length; i++){
@@ -204,7 +154,6 @@ public class TestDataTypes extends BasicTestCase{
         }
 		cal.close();
 		checkValues( st, values, needTrim);
-		
 		st.execute("Delete From "+ table);
 		cal = con.prepareCall("Insert Into " + table + "(abc) Values(?)");
         for(int i=0; i<values.length; i++){
@@ -255,8 +204,6 @@ public class TestDataTypes extends BasicTestCase{
         }
 		cal.close();
 		checkValues( st, values, needTrim);
-
-        
         st.execute("Delete From "+ table);
         Statement st2 = con.createStatement(ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_UPDATABLE);
         ResultSet rs2 = st2.executeQuery("SELECT * From " + table);
@@ -310,11 +257,8 @@ public class TestDataTypes extends BasicTestCase{
         st2.close();
         checkValues( st, values, needTrim);
     }
-	
-	
 	private void checkValues(Statement st, Object[] values, boolean needTrim) throws Exception{
         ResultSet rs = st.executeQuery("SELECT * From " + table);
-
         int i = 0;
         while(rs.next()){
             assertEqualsRsValue(values[i], rs, needTrim);
@@ -322,8 +266,6 @@ public class TestDataTypes extends BasicTestCase{
         }
         rs.close();
 	}
-
-
     public static Test suite() throws Exception{
         TestSuite theSuite = new TestSuite("Data Types");
         for(int i=0; i<DATATYPES.length; i++){
@@ -331,7 +273,6 @@ public class TestDataTypes extends BasicTestCase{
         }
         return theSuite;
     }
-
     public static void main(String[] argv) {
         junit.swingui.TestRunner.main(new String[]{TestDataTypes.class.getName()});
     }

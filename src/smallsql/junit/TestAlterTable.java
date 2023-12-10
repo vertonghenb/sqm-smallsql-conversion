@@ -1,19 +1,8 @@
-/*
- * Created on 14.11.2006
- */
 package smallsql.junit;
-
 import java.sql.*;
-
-
-/**
- * @author Volker Berlin
- */
 public class TestAlterTable extends BasicTestCase {
-
     private final String table = "AlterTable";
     private final int rowCount = 10;
-    
     public void setUp(){
         tearDown();
         try{
@@ -35,7 +24,6 @@ public class TestAlterTable extends BasicTestCase {
             e.printStackTrace();
         }
     }
-    
     public void tearDown(){
         try {
             dropTable( AllTests.getConnection(), table );
@@ -43,8 +31,6 @@ public class TestAlterTable extends BasicTestCase {
             ex.printStackTrace();
         }
     }
-    
-
     public void testAdd1Column() throws Exception{
         Connection con = AllTests.getConnection();
         Statement st = con.createStatement();
@@ -52,8 +38,6 @@ public class TestAlterTable extends BasicTestCase {
         ResultSet rs = st.executeQuery("Select * From " + table);
         assertRSMetaData( rs, new String[]{"i", "v", "a"},  new int[]{Types.INTEGER, Types.VARCHAR, Types.VARCHAR} );
     }
-    
-    
     public void testAdd2Column() throws Exception{
         Connection con = AllTests.getConnection();
         Statement st = con.createStatement();
@@ -67,8 +51,6 @@ public class TestAlterTable extends BasicTestCase {
         }
         assertEquals( "RowCount", rowCount, count );
     }
-
-    
     public void testAddWithTableLock_REPEATABLE_READ() throws Exception{
         Connection con = AllTests.getConnection();
         Statement st = con.createStatement();
@@ -90,8 +72,6 @@ public class TestAlterTable extends BasicTestCase {
             con.setAutoCommit(true);
         }
     }
-    
-    
     public void testAddWithTableLock_READ_COMMITTED() throws Exception{
         Connection con = AllTests.getConnection();
         Statement st = con.createStatement();
@@ -113,5 +93,4 @@ public class TestAlterTable extends BasicTestCase {
             con.setAutoCommit(true);
         }
     }
-    
 }

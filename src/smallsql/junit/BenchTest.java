@@ -1,54 +1,16 @@
-/* =============================================================
- * SmallSQL : a free Java DBMS library for the Java(tm) platform
- * =============================================================
- *
- * (C) Copyright 2004-2006, by Volker Berlin.
- *
- * Project Info:  http://www.smallsql.de/
- *
- * This library is free software; you can redistribute it and/or modify it 
- * under the terms of the GNU Lesser General Public License as published by 
- * the Free Software Foundation; either version 2.1 of the License, or 
- * (at your option) any later version.
- *
- * This library is distributed in the hope that it will be useful, but 
- * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY 
- * or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public 
- * License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public
- * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, 
- * USA.  
- *
- * [Java is a trademark or registered trademark of Sun Microsystems, Inc. 
- * in the United States and other countries.]
- *
- * ---------------
- * BenchTest.java
- * ---------------
- * Author: Volker Berlin
- * 
- */
 package smallsql.junit;
-
 import java.sql.*;
-
 public class BenchTest
 {
     static byte[] byteArray = {23, 34, 67 };
     static byte[] largeByteArray = new byte[4000];
-    
     static String driverClassName = "smallsql.database.SSDriver";
     static String userName        = "sa";
     static String password        = "";
     static String jdbcUrl         = "jdbc:smallsql:AllTests";
     static int    rowCount        = 10000;
-    
     static Connection con;
     static final String tableName = "BenchTest2";
-        
-    
     public static void main(String[] args) throws SQLException{
         for(int i=0; i<args.length;){
             String option = args[i++];
@@ -92,22 +54,13 @@ public class BenchTest
             e.printStackTrace();
         }finally{
             if (con != null){
-                //dropTestTable( con );
                 con.close();
             }
         }
     }
-    
-    
-    
-    /**
-      *  1. Test
-      *  Insert rows with default values with a classic insert statement.
-      */  
     static void test_InsertClassic(Connection con){
         System.out.println();
         System.out.println( "Test insert rows with default values with a classic insert statement: " + rowCount + " rows");
-        
         try{
             Statement st = con.createStatement( ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_UPDATABLE );
             long time = -System.currentTimeMillis();
@@ -129,17 +82,9 @@ public class BenchTest
             System.out.println("===================================================================");
         }
     }
-    
-    
-    
-    /**
-      *  2. Test
-      *  Delete all rows with a single statement.
-      */  
     static void test_DeleteAll(Connection con){
         System.out.println();
         System.out.println( "Test delete all rows: " + rowCount + " rows");
-        
         try{
             long time = -System.currentTimeMillis();
             Statement st = con.createStatement();
@@ -154,17 +99,9 @@ public class BenchTest
             System.out.println("===================================================================");
         }
     }
-    
-    
-    
-    /**
-      *  3. Test
-      *  Insert only empty rows with the default values of the row with the method insertRow().
-      */  
     static void test_InsertEmptyRows(Connection con){
         System.out.println();
         System.out.println( "Test insert empty rows with insertRow(): " + rowCount + " rows");
-        
         try{
             Statement st = con.createStatement( ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_UPDATABLE );
             ResultSet rs = st.executeQuery("SELECT * FROM "+tableName);
@@ -188,24 +125,15 @@ public class BenchTest
             System.out.println("===================================================================");
         }
     }
-    
-    
-    
-    /**
-      *  4. Test
-      *  Delete rows with the method deleteRow().
-      */  
     static void test_DeleteRows(Connection con){
         System.out.println();
         System.out.println( "Test delete rows with deleteRow(): " + rowCount + " rows");
-        
         try{
             Statement st1 = con.createStatement();
             ResultSet rs = st1.executeQuery( "SELECT count(*) FROM " + tableName);
             rs.next();
             int count = rs.getInt(1);
             if (count != rowCount){
-                // There are not the correct count of rows.
                 if (count == 0){
                     createTestDataWithClassicInsert( con );
                     rs = st1.executeQuery( "SELECT count(*) FROM " + tableName);
@@ -218,7 +146,6 @@ public class BenchTest
                 }
             }
             st1.close();
-            
             Statement st = con.createStatement( ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_UPDATABLE );
             rs = st.executeQuery("SELECT * FROM "+tableName);
             long time = -System.currentTimeMillis();
@@ -241,17 +168,9 @@ public class BenchTest
             System.out.println("===================================================================");
         }
     }
-    
-    
-    
-    /**
-      *  5. Test
-      *  Insert rows with the method insertRow().
-      */  
     static void test_InsertRows(Connection con){
         System.out.println();
         System.out.println( "Test insert rows with insertRow(): " + rowCount + " rows");
-        
         try{
             Statement st = con.createStatement( ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_UPDATABLE );
             ResultSet rs = st.executeQuery("SELECT * FROM " + tableName);
@@ -290,24 +209,16 @@ public class BenchTest
         }catch(Exception e){
         	e.printStackTrace();
             try{
-                // reset for the next test
                 Statement st = con.createStatement();
                 st.execute("DELETE FROM " + tableName);
                 st.close();
-            }catch(Exception ee){/* ignore it */}
+            }catch(Exception ee){}
             System.out.println("  Failed:"+e);
         }finally{
             System.out.println();
             System.out.println("===================================================================");
         }
     }
-    
-    
-    
-    /**
-      *  6. Test
-      *  Request one page of rows from a large ResultSet.
-      */  
     static void test_RowRequestPages(Connection con){
         int pages = 100; 
         int rows  = rowCount / pages;
@@ -319,7 +230,6 @@ public class BenchTest
             rs.next();
             int count = rs.getInt(1);
             if (count != rowCount){
-                // There are not the correct count of rows.
                 if (count == 0){
                     createTestDataWithClassicInsert( con );
                     rs = st1.executeQuery( "SELECT count(*) FROM " + tableName);
@@ -332,7 +242,6 @@ public class BenchTest
                 }
             }
             st1.close();
-            
             long time = -System.currentTimeMillis();
             Statement st = con.createStatement(ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_READ_ONLY);
             st.setFetchSize( rows );
@@ -340,7 +249,6 @@ public class BenchTest
                 rs = st.executeQuery("SELECT * FROM " + tableName);
                 rs.absolute( i*rows+1 );
                 for (int r=1; r<rows; r++){
-                    // only (rows-1) rows because absolute has already the first row
                     if (!rs.next()){
                         System.out.println( "  Failed: No rows were found at page " + i + " page and row " + r);
                         return;
@@ -362,17 +270,9 @@ public class BenchTest
             System.out.println("===================================================================");
         }
     }
-
-    
-    
-    /**
-      *  7. Test
-      *  Update rows with the method updateRow().
-      */  
     static void test_UpdateRows(Connection con){
         System.out.println();
         System.out.println( "Test update rows with updateRow(): " + rowCount + " rows");
-        
         try{
             Statement st = con.createStatement( ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_UPDATABLE );
             ResultSet rs = st.executeQuery("SELECT * FROM " + tableName);
@@ -398,13 +298,6 @@ public class BenchTest
             System.out.println("===================================================================");
         }
     }
-    
-    
-    
-    /**
-      *  8. Test
-      *  Update rows with a PreparedStatement.
-      */  
     static void test_UpdateRowsPrepare(Connection con){
         System.out.println();
         System.out.println( "Test update rows with a PreparedStatement: " + rowCount + " rows");
@@ -447,22 +340,13 @@ public class BenchTest
             System.out.println("===================================================================");
         }
     }
-    
-    
-    
-    /**
-      *  9. Test
-      *  Update rows with a PreparedStatement and a stored procedure.
-      */  
     static void test_UpdateRowsPrepareSP(Connection con){
         System.out.println();
         System.out.println( "Test update rows with a PreparedStatement and a stored procedure: " + rowCount + " rows");
-        
         try{
             Statement st = con.createStatement();
-            try{st.execute("drop procedure sp_"+tableName);}catch(Exception e){/* ignore it */}
+            try{st.execute("drop procedure sp_"+tableName);}catch(Exception e){}
             st.execute("create procedure sp_"+tableName+" (@bi binary,@c nchar(255),@d datetime,@de decimal,@f float,@im image,@i int,@m money,@n numeric(18, 0),@r real,@sd smalldatetime,@si smallint,@sm smallmoney,@sy sysname,@t ntext,@ti tinyint,@vb varbinary(255),@vc nvarchar(255)) as UPDATE " + tableName + " SET bi=@bi,c=@c,d=@d,de=@de,f=@f,im=@im,i=@i,m=@m,n=@n,r=@r,sd=@sd,si=@si,sm=@sm,sy=@sy,t=@t,ti=@ti,vb=@vb,vc=@vc WHERE i=@i");
-
             PreparedStatement pr = con.prepareStatement( "exec sp_" + tableName + " ?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?" );
             long time = -System.currentTimeMillis();
             for (int i=0; i<rowCount; i++){
@@ -502,19 +386,11 @@ public class BenchTest
             System.out.println("===================================================================");
         }
     }
-    
-
-    
-    /**
-      *  10. Test
-      *  Update rows with a PreparedStatement and Batch.
-      */  
     static void test_UpdateRowsPrepareBatch(Connection con){
         int batchSize = 10;
         int batches = rowCount / batchSize;
         System.out.println();
         System.out.println( "Test update rows with PreparedStatement and Batches: " + batches + " batches, " + batchSize + " batch size");
-        
         try{
             PreparedStatement pr = con.prepareStatement( "UPDATE " + tableName + " SET bi=?,c=?,d=?,de=?,f=?,im=?,i=?,m=?,n=?,r=?,sd=?,si=?,sm=?,sy=?,t=?,ti=?,vb=?,vc=? WHERE i=?" );
             long time = -System.currentTimeMillis();
@@ -557,17 +433,9 @@ public class BenchTest
             System.out.println("===================================================================");
         }
     }
-     
-    
-    
-    /**
-      *  11. Test
-      *  Scroll and call the getXXX methods for every columns.
-      */  
     static void test_Scroll_getXXX(Connection con){
         System.out.println();
         System.out.println( "Test scroll and call the getXXX methods for every columns: " + rowCount + " rows");
-        
         try{
             Statement st = con.createStatement();
             long time = -System.currentTimeMillis();
@@ -604,16 +472,9 @@ public class BenchTest
             System.out.println("===================================================================");
         }
     }
-     
-    
-    /**
-      *  12. Test
-      *  Update large binary data.
-      */  
     static void test_UpdateLargeBinary(Connection con){
         System.out.println();
         System.out.println( "Test update large binary data: " + rowCount + "KB bytes");
-        
         try{
             java.io.FileOutputStream fos = new java.io.FileOutputStream(tableName+".bin");
             byte bytes[] = new byte[1024];
@@ -639,18 +500,9 @@ public class BenchTest
             System.out.println("===================================================================");
         }
     }
-     
-    
-
-    
-    /**
-      *  12. Test
-      *  Update large binary data with a SP.
-      */  
     static void test_UpdateLargeBinaryWithSP(Connection con){
         System.out.println();
         System.out.println( "Test update large binary data with a SP: " + rowCount + "KB bytes");
-        
         try{
             java.io.FileOutputStream fos = new java.io.FileOutputStream(tableName+".bin");
             byte bytes[] = new byte[1024];
@@ -680,20 +532,10 @@ public class BenchTest
             System.out.println("===================================================================");
         }
     }
-     
-    
-
-    
-    /**
-      *  Create a new Table for testing
-      */  
     static void createTestTable(Connection con) throws SQLException{
             Statement st;
             st = con.createStatement();
-            //delete old table
             dropTestTable( con );
-
-            //create table
             st.execute(
                 "CREATE TABLE " + tableName + " ("+
 	            "    pr  numeric IDENTITY,"+
@@ -719,26 +561,20 @@ public class BenchTest
 	            ")");
 	        st.close();  
     }
-    
-
-    
     static void deleteTestTable(Connection con){
         try{
             Statement st = con.createStatement();
             st.execute("DELETE FROM " + tableName);
             st.close();
-        }catch(Exception e){/* ignore it */}
+        }catch(Exception e){}
     }
-
     static void dropTestTable(Connection con){
         try{
             Statement st = con.createStatement();
             st.execute("drop table " + tableName);
             st.close();
-        }catch(Exception e){/* ignore it */}
+        }catch(Exception e){}
     }
-    
-    // create test data after the insert test is failed
     static void createTestDataWithClassicInsert(Connection con) throws SQLException{
         String sql = "INSERT INTO " + tableName + "(bi,c,d,de,f,im,i,m,n,r,si,sd,sm,sy,t,ti,vb,vc) VALUES(0x172243,'Test','20010101',1234.56789,9876.54321,0x";
         for(int i=0; i<largeByteArray.length; i++){

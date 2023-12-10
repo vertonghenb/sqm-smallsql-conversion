@@ -1,37 +1,4 @@
-/* =============================================================
- * SmallSQL : a free Java DBMS library for the Java(tm) platform
- * =============================================================
- *
- * (C) Copyright 2004-2009, by Volker Berlin.
- *
- * Project Info:  http://www.smallsql.de/
- *
- * This library is free software; you can redistribute it and/or modify it 
- * under the terms of the GNU Lesser General Public License as published by 
- * the Free Software Foundation; either version 2.1 of the License, or 
- * (at your option) any later version.
- *
- * This library is distributed in the hope that it will be useful, but 
- * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY 
- * or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public 
- * License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public
- * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, 
- * USA.  
- *
- * [Java is a trademark or registered trademark of Sun Microsystems, Inc. 
- * in the United States and other countries.]
- *
- * ---------------
- * SSResultSet.java
- * ---------------
- * Author: Volker Berlin
- * 
- */
 package smallsql.database;
-
 import java.sql.*;
 import java.math.*;
 import java.io.ByteArrayInputStream;
@@ -41,9 +8,7 @@ import java.util.Map;
 import java.util.Calendar;
 import java.net.URL;
 import smallsql.database.language.Language;
-
 public class SSResultSet implements ResultSet {
-
     SSResultSetMetaData metaData = new SSResultSetMetaData();
     private CommandSelect cmd;
     private boolean wasNull;
@@ -53,43 +18,28 @@ public class SSResultSet implements ResultSet {
     private ExpressionValue[] values;
     private int fetchDirection;
     private int fetchSize;
-
     SSResultSet( SSStatement st, CommandSelect cmd ){
         this.st = st;
         metaData.columns = cmd.columnExpressions;
         this.cmd = cmd;
 		isUpdatable = st != null && st.rsConcurrency == CONCUR_UPDATABLE && !cmd.isGroupResult();
     }
-
-/*==============================================================================
-
-    Public Interface
-
-==============================================================================*/
-
     public void close(){
     	st.con.log.println("ResultSet.close");
         cmd = null;
     }
-    
-    
     public boolean wasNull(){
         return wasNull;
     }
-    
-    
     public String getString(int columnIndex) throws SQLException {
         try{
             Object obj = getObject(columnIndex);
-            
             if(obj instanceof String || obj == null){
                 return (String)obj;
             }
             if(obj instanceof byte[]){
-                // The Display Value of a binary Value is different as the default in SQL 
                 return "0x" + Utils.bytes2hex( (byte[])obj );
             }
-            // all other values
             return getValue(columnIndex).getString();
         }catch(Exception e){
             throw SmallSQLException.createFromException( e );
@@ -175,8 +125,6 @@ public class SSResultSet implements ResultSet {
             throw SmallSQLException.createFromException( e );
         }
     }
-    
-    
     public Time getTime(int columnIndex) throws SQLException {
         try{
 			Expression expr = getValue(columnIndex);
@@ -197,25 +145,15 @@ public class SSResultSet implements ResultSet {
             throw SmallSQLException.createFromException( e );
         }
     }
-    
-    
     public InputStream getAsciiStream(int columnIndex) throws SQLException {
-        /**@todo: Implement this java.sql.ResultSet.getAsciiStream method*/
         throw SmallSQLException.create(Language.UNSUPPORTED_OPERATION, "getAsciiStream");
     }
-    
-    
     public InputStream getUnicodeStream(int columnIndex) throws SQLException {
-        /**@todo: Implement this java.sql.ResultSet.getUnicodeStream method*/
         throw SmallSQLException.create(Language.UNSUPPORTED_OPERATION, "getUnicodeStream");
     }
-    
-    
     public InputStream getBinaryStream(int columnIndex) throws SQLException {
         return new ByteArrayInputStream(getBytes(columnIndex));
     }
-    
-    
     public String getString(String columnName) throws SQLException {
         return getString( findColumn( columnName ) );
     }
@@ -264,28 +202,17 @@ public class SSResultSet implements ResultSet {
     public InputStream getBinaryStream(String columnName) throws SQLException {
         return getBinaryStream( findColumn( columnName ) );
     }
-    
-    
     public SQLWarning getWarnings(){
         return null;
     }
-    
-    
     public void clearWarnings(){
-        //TODO support for Warnings
     }
-    
-    
     public String getCursorName(){
         return null;
     }
-    
-    
     public ResultSetMetaData getMetaData(){
         return metaData;
     }
-    
-    
     public Object getObject(int columnIndex) throws SQLException {
         try{
             Object obj = getValue(columnIndex).getApiObject();
@@ -298,24 +225,15 @@ public class SSResultSet implements ResultSet {
     public Object getObject(String columnName) throws SQLException {
         return getObject( findColumn( columnName ) );
     }
-    
-    
     public int findColumn(String columnName) throws SQLException {
     	return getCmd().findColumn(columnName) + 1;
     }
-    
-
     public Reader getCharacterStream(int columnIndex) throws SQLException {
-        /**@todo: Implement this java.sql.ResultSet.getCharacterStream method*/
         throw SmallSQLException.create(Language.UNSUPPORTED_OPERATION, "getCharacterStream");
     }
-    
-    
     public Reader getCharacterStream(String columnName) throws SQLException {
         return getCharacterStream( findColumn( columnName ) );
     }
-    
-    
     public BigDecimal getBigDecimal(int columnIndex) throws SQLException {
         try{
             MutableNumeric obj = getValue(columnIndex).getNumeric();
@@ -332,8 +250,6 @@ public class SSResultSet implements ResultSet {
     public boolean isBeforeFirst() throws SQLException {
 		return getCmd().isBeforeFirst();
     }
-    
-    
     public boolean isAfterLast() throws SQLException {
         try{
             return getCmd().isAfterLast();
@@ -341,13 +257,9 @@ public class SSResultSet implements ResultSet {
             throw SmallSQLException.createFromException(e);
         }
     }
-    
-    
     public boolean isFirst() throws SQLException {
     	return getCmd().isFirst();
     }
-    
-    
     public boolean isLast() throws SQLException {
     	try{
     		return getCmd().isLast();
@@ -355,8 +267,6 @@ public class SSResultSet implements ResultSet {
 			throw SmallSQLException.createFromException(e);
 		}
     }
-    
-    
     public void beforeFirst() throws SQLException {
     	try{
             moveToCurrentRow();
@@ -365,8 +275,6 @@ public class SSResultSet implements ResultSet {
     		throw SmallSQLException.createFromException(e);
     	}
     }
-    
-    
     public boolean first() throws SQLException {
 		try{
 			if(st.rsType == ResultSet.TYPE_FORWARD_ONLY) throw SmallSQLException.create(Language.RSET_FWDONLY);
@@ -376,8 +284,6 @@ public class SSResultSet implements ResultSet {
 			throw SmallSQLException.createFromException(e);
 		}
     }
-    
-    
 	public boolean previous() throws SQLException {
 		try{
             moveToCurrentRow();
@@ -386,8 +292,6 @@ public class SSResultSet implements ResultSet {
 			throw SmallSQLException.createFromException(e);
 		}
 	}
-    
-    
 	public boolean next() throws SQLException {
 		try{
             moveToCurrentRow();
@@ -396,8 +300,6 @@ public class SSResultSet implements ResultSet {
 			throw SmallSQLException.createFromException(e);
 		}
 	}
-	
-	
     public boolean last() throws SQLException {
 		try{
             moveToCurrentRow();
@@ -406,8 +308,6 @@ public class SSResultSet implements ResultSet {
 			throw SmallSQLException.createFromException(e);
 		}
     }
-    
-    
 	public void afterLast() throws SQLException {
 		try{
 			if(st.rsType == ResultSet.TYPE_FORWARD_ONLY) throw SmallSQLException.create(Language.RSET_FWDONLY);
@@ -417,8 +317,6 @@ public class SSResultSet implements ResultSet {
 			throw SmallSQLException.createFromException(e);
 		}
 	}
-    
-    
     public boolean absolute(int row) throws SQLException {
 		try{
             moveToCurrentRow();
@@ -427,8 +325,6 @@ public class SSResultSet implements ResultSet {
 			throw SmallSQLException.createFromException(e);
 		}
     }
-    
-    
     public boolean relative(int rows) throws SQLException {
 		try{
             moveToCurrentRow();
@@ -437,8 +333,6 @@ public class SSResultSet implements ResultSet {
 			throw SmallSQLException.createFromException(e);
 		}
     }
-    
-    
 	public int getRow() throws SQLException {
 		try{
 			return getCmd().getRow();
@@ -446,53 +340,33 @@ public class SSResultSet implements ResultSet {
 			throw SmallSQLException.createFromException(e);
 		}
 	}
-    
-    
     public void setFetchDirection(int direction){
         fetchDirection = direction;
     }
-    
-    
     public int getFetchDirection(){
         return fetchDirection;
     }
-    
-    
     public void setFetchSize(int rows){
         fetchSize = rows;
     }
-    
-    
     public int getFetchSize(){
         return fetchSize;
     }
-    
-    
     public int getType() throws SQLException {
     	return getCmd().from.isScrollable() ? ResultSet.TYPE_SCROLL_SENSITIVE : ResultSet.TYPE_FORWARD_ONLY;
     }
-    
-    
     public int getConcurrency(){
     	return isUpdatable ? ResultSet.CONCUR_UPDATABLE : ResultSet.CONCUR_READ_ONLY;
     }
-    
-    
     public boolean rowUpdated(){
     	return false;
     }
-    
-    
     public boolean rowInserted() throws SQLException {
     	return getCmd().from.rowInserted();
     }
-    
-    
     public boolean rowDeleted() throws SQLException {
     	return getCmd().from.rowDeleted();
     }
-    
-    
     public void updateNull(int columnIndex) throws SQLException {
 		updateValue( columnIndex, null, SQLTokenizer.NULL);
     }
@@ -541,20 +415,12 @@ public class SSResultSet implements ResultSet {
     public void updateBinaryStream(int columnIndex, InputStream x, int length) throws SQLException {
 		updateValue( columnIndex, x, SQLTokenizer.LONGVARBINARY, length);
     }
-    
-    
     public void updateCharacterStream(int columnIndex, Reader x, int length) throws SQLException {
-        /**@todo: Implement this java.sql.ResultSet.updateCharacterStream method*/
         throw SmallSQLException.create(Language.UNSUPPORTED_OPERATION, "Reader object");
     }
-    
-    
     public void updateObject(int columnIndex, Object x, int scale) throws SQLException {
-    	//TODO scale to consider
 		updateValue( columnIndex, x, -1);
     }
-    
-    
     public void updateObject(int columnIndex, Object x) throws SQLException {
     	updateValue( columnIndex, x, -1);
     }
@@ -615,7 +481,6 @@ public class SSResultSet implements ResultSet {
     public void updateObject(String columnName, Object x) throws SQLException {
         updateObject( findColumn( columnName ), x );
     }
-    
     public void insertRow() throws SQLException {
 		st.con.log.println("insertRow()");
         if(!isInsertRow){
@@ -624,36 +489,26 @@ public class SSResultSet implements ResultSet {
 		getCmd().insertRow( st.con, values);
         clearRowBuffer();
     }
-    
-    
-    /**
-     * Test if it on the insert row.
-     * @throws SQLException if on the insert row
-     */
     private void testNotInsertRow() throws SQLException{
         if(isInsertRow){
             throw SmallSQLException.create(Language.RSET_ON_INSERT_ROW);
         }
     }
-    
     public void updateRow() throws SQLException {
         try {
         	if(values == null){
-                // no changes then also no update needed
                 return;
             }
        		st.con.log.println("updateRow()");
             testNotInsertRow();
             final CommandSelect command = getCmd();
             command.updateRow( st.con, values);
-            command.relative(0);  //refresh the row
+            command.relative(0);  
             clearRowBuffer();
         } catch (Exception e) {
             throw SmallSQLException.createFromException(e);
         }
     }
-    
-    
     public void deleteRow() throws SQLException {
 		st.con.log.println("deleteRow()");
         testNotInsertRow();
@@ -664,17 +519,10 @@ public class SSResultSet implements ResultSet {
         testNotInsertRow();
         relative(0);
     }
-    
-
     public void cancelRowUpdates() throws SQLException{
         testNotInsertRow();
         clearRowBuffer();
     }
-    
-    
-    /**
-     * Clear the update row or insert row buffer.
-     */
     private void clearRowBuffer(){
         if(values != null){
             for(int i=values.length-1; i>=0; i--){
@@ -682,8 +530,6 @@ public class SSResultSet implements ResultSet {
             }
         }
     }
-    
-
     public void moveToInsertRow() throws SQLException {
     	if(isUpdatable){
     		isInsertRow = true;
@@ -692,55 +538,28 @@ public class SSResultSet implements ResultSet {
             throw SmallSQLException.create(Language.RSET_READONLY);
     	}
     }
-    
-    
     public void moveToCurrentRow() throws SQLException{
 		isInsertRow = false;
         clearRowBuffer();
         if(values == null){
-            //init the values array as insert row buffer 
             getUpdateValue(1);
         }
     }
-    
-    
     public Statement getStatement() {
         return st;
     }
-    
-    
-    //public Object getObject(int i, Map map) throws SQLException {
-    //    return getObject( i );
-    //}
-    
-    
     public Ref getRef(int i) throws SQLException {
-        /**@todo: Implement this java.sql.ResultSet.getRef method*/
         throw SmallSQLException.create(Language.UNSUPPORTED_OPERATION, "Ref object");
     }
-    
-    
     public Blob getBlob(int i) throws SQLException {
-        /**@todo: Implement this java.sql.ResultSet.getBlob method*/
         throw SmallSQLException.create(Language.UNSUPPORTED_OPERATION, "Blob object");
     }
-    
-    
     public Clob getClob(int i) throws SQLException {
-        /**@todo: Implement this java.sql.ResultSet.getClob method*/
         throw SmallSQLException.create(Language.UNSUPPORTED_OPERATION, "Clob object");
     }
-    
-    
     public Array getArray(int i) throws SQLException {
-        /**@todo: Implement this java.sql.ResultSet.getArray method*/
         throw SmallSQLException.create(Language.UNSUPPORTED_OPERATION, "Array");
     }
-    
-    
-    //public Object getObject(String columnName, Map map) throws SQLException {
-    //    return getObject( columnName );
-    //}
     public Ref getRef(String columnName) throws SQLException {
         return getRef( findColumn( columnName ) );
     }
@@ -753,8 +572,6 @@ public class SSResultSet implements ResultSet {
     public Array getArray(String columnName) throws SQLException {
         return getArray( findColumn( columnName ) );
     }
-    
-    
     public Date getDate(int columnIndex, Calendar cal) throws SQLException {
         try{
             if(cal == null){
@@ -768,13 +585,9 @@ public class SSResultSet implements ResultSet {
             throw SmallSQLException.createFromException( e );
         }
     }
-    
-    
     public Date getDate(String columnName, Calendar cal) throws SQLException {
         return getDate( findColumn( columnName ), cal );
     }
-    
-    
     public Time getTime(int columnIndex, Calendar cal) throws SQLException {
         try{
             if(cal == null){
@@ -788,13 +601,9 @@ public class SSResultSet implements ResultSet {
             throw SmallSQLException.createFromException( e );
         }
     }
-    
-    
     public Time getTime(String columnName, Calendar cal) throws SQLException {
         return getTime( findColumn( columnName ), cal );
     }
-    
-    
     public Timestamp getTimestamp(int columnIndex, Calendar cal) throws SQLException {
         try{
             if(cal == null){
@@ -808,13 +617,9 @@ public class SSResultSet implements ResultSet {
             throw SmallSQLException.createFromException( e );
         }
     }
-    
-    
     public Timestamp getTimestamp(String columnName, Calendar cal) throws SQLException {
         return getTimestamp( findColumn( columnName ), cal );
     }
-    
-    
     public URL getURL(int columnIndex) throws SQLException {
         try{
             Expression expr = getValue(columnIndex);
@@ -825,66 +630,33 @@ public class SSResultSet implements ResultSet {
             throw SmallSQLException.createFromException( e );
         }
     }
-    
-    
     public URL getURL(String columnName) throws SQLException {
         return getURL( findColumn( columnName ) );
     }
-    
-    
     public void updateRef(int columnIndex, Ref x) throws SQLException {
-        /**@todo: Implement this java.sql.ResultSet.updateRef method*/
         throw SmallSQLException.create(Language.UNSUPPORTED_OPERATION, "Ref");
     }
-    
-    
     public void updateRef(String columnName, Ref x) throws SQLException {
         updateRef( findColumn( columnName ), x );
     }
-    
-    
     public void updateBlob(int columnIndex, Blob x) throws SQLException {
-        /**@todo: Implement this java.sql.ResultSet.updateBlob method*/
         throw SmallSQLException.create(Language.UNSUPPORTED_OPERATION, "Blob");
     }
-    
-    
     public void updateBlob(String columnName, Blob x) throws SQLException {
         updateBlob( findColumn( columnName ), x );
     }
-    
-    
     public void updateClob(int columnIndex, Clob x) throws SQLException {
-        /**@todo: Implement this java.sql.ResultSet.updateClob method*/
         throw SmallSQLException.create(Language.UNSUPPORTED_OPERATION, "Clob");
     }
-    
-    
     public void updateClob(String columnName, Clob x) throws SQLException {
         updateClob( findColumn( columnName ), x );
     }
-    
-    
     public void updateArray(int columnIndex, Array x) throws SQLException {
-        /**@todo: Implement this java.sql.ResultSet.updateArray method*/
         throw SmallSQLException.create(Language.UNSUPPORTED_OPERATION, "Array");
     }
-    
-    
     public void updateArray(String columnName, Array x) throws SQLException {
         updateArray( findColumn( columnName ), x );
     }
-    
-	/*========================================================
-
-	private methods
-
-	=========================================================*/
-
-    /**
-     * Get the expression of a column. 
-     * This expression can be used to request a value of the current row.
-     */
     final private Expression getValue(int columnIndex) throws SQLException{
         if(values != null){
             ExpressionValue value = values[ metaData.getColumnIdx( columnIndex ) ];
@@ -894,8 +666,6 @@ public class SSResultSet implements ResultSet {
         }
         return metaData.getColumnExpression(columnIndex);
     }
-    
-
 	final private ExpressionValue getUpdateValue(int columnIndex) throws SQLException{
 		if(values == null){
 			int count = metaData.getColumnCount();
@@ -906,25 +676,18 @@ public class SSResultSet implements ResultSet {
 		}
 		return values[ metaData.getColumnIdx( columnIndex ) ];
 	}
-	
-    
     final private void updateValue(int columnIndex, Object x, int dataType) throws SQLException{
 		getUpdateValue( columnIndex ).set( x, dataType );
 		if(st.con.log.isLogging()){
-			
 			st.con.log.println("parameter '"+metaData.getColumnName(columnIndex)+"' = "+x+"; type="+dataType);
 		}
     }
-    
-    
 	final private void updateValue(int columnIndex, Object x, int dataType, int length) throws SQLException{
 		getUpdateValue( columnIndex ).set( x, dataType, length );
 		if(st.con.log.isLogging()){
 			st.con.log.println("parameter '"+metaData.getColumnName(columnIndex)+"' = "+x+"; type="+dataType+"; length="+length);
 		}
 	}
-
-
 	final private CommandSelect getCmd() throws SQLException {
 		if(cmd == null){
             throw SmallSQLException.create(Language.RSET_CLOSED);
@@ -932,349 +695,209 @@ public class SSResultSet implements ResultSet {
         st.con.testClosedConnection();
 		return cmd;
 	}
-
 	@Override
 	public <T> T unwrap(Class<T> iface) throws SQLException {
-		// TODO Auto-generated method stub
 		return null;
 	}
-
 	@Override
 	public boolean isWrapperFor(Class<?> iface) throws SQLException {
-		// TODO Auto-generated method stub
 		return false;
 	}
-
 	@Override
 	public Object getObject(int columnIndex, Map<String, Class<?>> map)
 			throws SQLException {
-		// TODO Auto-generated method stub
 		return null;
 	}
-
 	@Override
 	public Object getObject(String columnLabel, Map<String, Class<?>> map)
 			throws SQLException {
-		// TODO Auto-generated method stub
 		return null;
 	}
-
 	@Override
 	public RowId getRowId(int columnIndex) throws SQLException {
-		// TODO Auto-generated method stub
 		return null;
 	}
-
 	@Override
 	public RowId getRowId(String columnLabel) throws SQLException {
-		// TODO Auto-generated method stub
 		return null;
 	}
-
 	@Override
 	public void updateRowId(int columnIndex, RowId x) throws SQLException {
-		// TODO Auto-generated method stub
-		
 	}
-
 	@Override
 	public void updateRowId(String columnLabel, RowId x) throws SQLException {
-		// TODO Auto-generated method stub
-		
 	}
-
 	@Override
 	public int getHoldability() throws SQLException {
-		// TODO Auto-generated method stub
 		return 0;
 	}
-
 	@Override
 	public boolean isClosed() throws SQLException {
-		// TODO Auto-generated method stub
 		return false;
 	}
-
 	@Override
 	public void updateNString(int columnIndex, String nString)
 			throws SQLException {
-		// TODO Auto-generated method stub
-		
 	}
-
 	@Override
 	public void updateNString(String columnLabel, String nString)
 			throws SQLException {
-		// TODO Auto-generated method stub
-		
 	}
-
 	@Override
 	public void updateNClob(int columnIndex, NClob nClob) throws SQLException {
-		// TODO Auto-generated method stub
-		
 	}
-
 	@Override
 	public void updateNClob(String columnLabel, NClob nClob)
 			throws SQLException {
-		// TODO Auto-generated method stub
-		
 	}
-
 	@Override
 	public NClob getNClob(int columnIndex) throws SQLException {
-		// TODO Auto-generated method stub
 		return null;
 	}
-
 	@Override
 	public NClob getNClob(String columnLabel) throws SQLException {
-		// TODO Auto-generated method stub
 		return null;
 	}
-
 	@Override
 	public SQLXML getSQLXML(int columnIndex) throws SQLException {
-		// TODO Auto-generated method stub
 		return null;
 	}
-
 	@Override
 	public SQLXML getSQLXML(String columnLabel) throws SQLException {
-		// TODO Auto-generated method stub
 		return null;
 	}
-
 	@Override
 	public void updateSQLXML(int columnIndex, SQLXML xmlObject)
 			throws SQLException {
-		// TODO Auto-generated method stub
-		
 	}
-
 	@Override
 	public void updateSQLXML(String columnLabel, SQLXML xmlObject)
 			throws SQLException {
-		// TODO Auto-generated method stub
-		
 	}
-
 	@Override
 	public String getNString(int columnIndex) throws SQLException {
-		// TODO Auto-generated method stub
 		return null;
 	}
-
 	@Override
 	public String getNString(String columnLabel) throws SQLException {
-		// TODO Auto-generated method stub
 		return null;
 	}
-
 	@Override
 	public Reader getNCharacterStream(int columnIndex) throws SQLException {
-		// TODO Auto-generated method stub
 		return null;
 	}
-
 	@Override
 	public Reader getNCharacterStream(String columnLabel) throws SQLException {
-		// TODO Auto-generated method stub
 		return null;
 	}
-
 	@Override
 	public void updateNCharacterStream(int columnIndex, Reader x, long length)
 			throws SQLException {
-		// TODO Auto-generated method stub
-		
 	}
-
 	@Override
 	public void updateNCharacterStream(String columnLabel, Reader reader,
 			long length) throws SQLException {
-		// TODO Auto-generated method stub
-		
 	}
-
 	@Override
 	public void updateAsciiStream(int columnIndex, InputStream x, long length)
 			throws SQLException {
-		// TODO Auto-generated method stub
-		
 	}
-
 	@Override
 	public void updateBinaryStream(int columnIndex, InputStream x, long length)
 			throws SQLException {
-		// TODO Auto-generated method stub
-		
 	}
-
 	@Override
 	public void updateCharacterStream(int columnIndex, Reader x, long length)
 			throws SQLException {
-		// TODO Auto-generated method stub
-		
 	}
-
 	@Override
 	public void updateAsciiStream(String columnLabel, InputStream x, long length)
 			throws SQLException {
-		// TODO Auto-generated method stub
-		
 	}
-
 	@Override
 	public void updateBinaryStream(String columnLabel, InputStream x,
 			long length) throws SQLException {
-		// TODO Auto-generated method stub
-		
 	}
-
 	@Override
 	public void updateCharacterStream(String columnLabel, Reader reader,
 			long length) throws SQLException {
-		// TODO Auto-generated method stub
-		
 	}
-
 	@Override
 	public void updateBlob(int columnIndex, InputStream inputStream, long length)
 			throws SQLException {
-		// TODO Auto-generated method stub
-		
 	}
-
 	@Override
 	public void updateBlob(String columnLabel, InputStream inputStream,
 			long length) throws SQLException {
-		// TODO Auto-generated method stub
-		
 	}
-
 	@Override
 	public void updateClob(int columnIndex, Reader reader, long length)
 			throws SQLException {
-		// TODO Auto-generated method stub
-		
 	}
-
 	@Override
 	public void updateClob(String columnLabel, Reader reader, long length)
 			throws SQLException {
-		// TODO Auto-generated method stub
-		
 	}
-
 	@Override
 	public void updateNClob(int columnIndex, Reader reader, long length)
 			throws SQLException {
-		// TODO Auto-generated method stub
-		
 	}
-
 	@Override
 	public void updateNClob(String columnLabel, Reader reader, long length)
 			throws SQLException {
-		// TODO Auto-generated method stub
-		
 	}
-
 	@Override
 	public void updateNCharacterStream(int columnIndex, Reader x)
 			throws SQLException {
-		// TODO Auto-generated method stub
-		
 	}
-
 	@Override
 	public void updateNCharacterStream(String columnLabel, Reader reader)
 			throws SQLException {
-		// TODO Auto-generated method stub
-		
 	}
-
 	@Override
 	public void updateAsciiStream(int columnIndex, InputStream x)
 			throws SQLException {
-		// TODO Auto-generated method stub
-		
 	}
-
 	@Override
 	public void updateBinaryStream(int columnIndex, InputStream x)
 			throws SQLException {
-		// TODO Auto-generated method stub
-		
 	}
-
 	@Override
 	public void updateCharacterStream(int columnIndex, Reader x)
 			throws SQLException {
-		// TODO Auto-generated method stub
-		
 	}
-
 	@Override
 	public void updateAsciiStream(String columnLabel, InputStream x)
 			throws SQLException {
-		// TODO Auto-generated method stub
-		
 	}
-
 	@Override
 	public void updateBinaryStream(String columnLabel, InputStream x)
 			throws SQLException {
-		// TODO Auto-generated method stub
-		
 	}
-
 	@Override
 	public void updateCharacterStream(String columnLabel, Reader reader)
 			throws SQLException {
-		// TODO Auto-generated method stub
-		
 	}
-
 	@Override
 	public void updateBlob(int columnIndex, InputStream inputStream)
 			throws SQLException {
-		// TODO Auto-generated method stub
-		
 	}
-
 	@Override
 	public void updateBlob(String columnLabel, InputStream inputStream)
 			throws SQLException {
-		// TODO Auto-generated method stub
-		
 	}
-
 	@Override
 	public void updateClob(int columnIndex, Reader reader) throws SQLException {
-		// TODO Auto-generated method stub
-		
 	}
-
 	@Override
 	public void updateClob(String columnLabel, Reader reader)
 			throws SQLException {
-		// TODO Auto-generated method stub
-		
 	}
-
 	@Override
 	public void updateNClob(int columnIndex, Reader reader) throws SQLException {
-		// TODO Auto-generated method stub
-		
 	}
-
 	@Override
 	public void updateNClob(String columnLabel, Reader reader)
 			throws SQLException {
-		// TODO Auto-generated method stub
-		
 	}
 }

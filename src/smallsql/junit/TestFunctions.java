@@ -1,48 +1,10 @@
-/* =============================================================
- * SmallSQL : a free Java DBMS library for the Java(tm) platform
- * =============================================================
- *
- * (C) Copyright 2004-2007, by Volker Berlin.
- *
- * Project Info:  http://www.smallsql.de/
- *
- * This library is free software; you can redistribute it and/or modify it 
- * under the terms of the GNU Lesser General Public License as published by 
- * the Free Software Foundation; either version 2.1 of the License, or 
- * (at your option) any later version.
- *
- * This library is distributed in the hope that it will be useful, but 
- * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY 
- * or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public 
- * License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public
- * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, 
- * USA.  
- *
- * [Java is a trademark or registered trademark of Sun Microsystems, Inc. 
- * in the United States and other countries.]
- *
- * ---------------
- * TestFunktions.java
- * ---------------
- * Author: Volker Berlin
- * 
- */
 package smallsql.junit;
-
 import junit.framework.*;
-
 import java.math.*;
 import java.sql.*;
-
 public class TestFunctions extends BasicTestCase{
-
     private TestValue testValue;
-
     private static final String table = "table_functions";
-
     private static final TestValue[] TESTS = new TestValue[]{
 		a("$3"               	, new BigDecimal("3.0000")),
 	    a("$-3.1"              	, new BigDecimal("-3.1000")),
@@ -166,9 +128,9 @@ public class TestFunctions extends BasicTestCase{
 		a("convert(decimal(38,6), '11.123456') - 1" 		, new BigDecimal("10.123456")),
 		a("convert(decimal(12,2), '11.0000') * 1" 		, new BigDecimal("11.00")),
 		a("convert(decimal(12,2), '11.0000') * convert(decimal(12,2), 1)" 		, new BigDecimal("11.0000")),
-		a("convert(decimal(12,2), '11.0000') / 1" 		, new BigDecimal("11.0000000")), //scale = Max(left scale+5, right scale +4)
-		a("convert(decimal(12,0), 11) / convert(decimal(12,2), 1)" 		, new BigDecimal("11.000000")), //scale = Max(left scale+5, right scale +4)
-		a("convert(money, -10000 / 10000.0)" 		, new BigDecimal("-1.0000")), //scale = Max(left scale+5, right scale +4)
+		a("convert(decimal(12,2), '11.0000') / 1" 		, new BigDecimal("11.0000000")), 
+		a("convert(decimal(12,0), 11) / convert(decimal(12,2), 1)" 		, new BigDecimal("11.000000")), 
+		a("convert(money, -10000 / 10000.0)" 		, new BigDecimal("-1.0000")), 
 		a("-convert(money, '11.123456')" 		, new BigDecimal("-11.1235")),
 		a("-convert(smallmoney, '11.123456')" 	, new BigDecimal("-11.1235")),
 		a("convert(uniqueidentifier, 0x12345678901234567890)" 	, "78563412-1290-5634-7890-000000000000"),
@@ -356,21 +318,16 @@ public class TestFunctions extends BasicTestCase{
         a("soundex('Wikipedia')",       "W213"),
         a("0x10 < 0x1020",              Boolean.TRUE),
 	};
-
-
     private static TestValue a(String function, Object result){
         TestValue value = new TestValue();
         value.function  = function;
         value.result    = result;
         return value;
     }
-
     TestFunctions(TestValue testValue){
         super(testValue.function);
         this.testValue = testValue;
     }
-    
-
     public void tearDown(){
         try{
             Connection con = AllTests.getConnection();
@@ -378,10 +335,8 @@ public class TestFunctions extends BasicTestCase{
             st.execute("drop table " + table);
             st.close();
         }catch(Throwable e){
-            //e.printStackTrace();
         }
     }
-
     public void setUp(){
         tearDown();
         try{
@@ -394,7 +349,6 @@ public class TestFunctions extends BasicTestCase{
             e.printStackTrace();
         }
     }
-
     public void runTest() throws Exception{
     	String query = "Select " + testValue.function + ",5 from " + table;
 		assertEqualsRsValue( testValue.result, query);
@@ -402,7 +356,6 @@ public class TestFunctions extends BasicTestCase{
             assertEqualsRsValue( testValue.result, "Select " + testValue.function + " from " + table + " Group By " + testValue.function);
         }
     }
-
     public static Test suite() throws Exception{
         TestSuite theSuite = new TestSuite("Functions");
         for(int i=0; i<TESTS.length; i++){
@@ -410,7 +363,6 @@ public class TestFunctions extends BasicTestCase{
         }
         return theSuite;
     }
-
     private static class TestValue{
         String function;
         Object result;

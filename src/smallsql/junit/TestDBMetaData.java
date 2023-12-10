@@ -1,63 +1,19 @@
-/* =============================================================
- * SmallSQL : a free Java DBMS library for the Java(tm) platform
- * =============================================================
- *
- * (C) Copyright 2004-2007, by Volker Berlin.
- *
- * Project Info:  http://www.smallsql.de/
- *
- * This library is free software; you can redistribute it and/or modify it 
- * under the terms of the GNU Lesser General Public License as published by 
- * the Free Software Foundation; either version 2.1 of the License, or 
- * (at your option) any later version.
- *
- * This library is distributed in the hope that it will be useful, but 
- * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY 
- * or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public 
- * License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public
- * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, 
- * USA.  
- *
- * [Java is a trademark or registered trademark of Sun Microsystems, Inc. 
- * in the United States and other countries.]
- *
- * ---------------
- * TestDBMetaData.java
- * ---------------
- * Author: Volker Berlin
- * 
- */
 package smallsql.junit;
-
 import java.sql.*;
 import java.text.*;
 import java.util.Locale;
-/**
- * @author Volker Berlin
- *
- */
 public class TestDBMetaData extends BasicTestCase {
-
 	public TestDBMetaData(){
 		super();
 	}
-    
-    
 	public TestDBMetaData(String arg0) {
 		super(arg0);
 	}
-
-    
     public void testGetURL() throws Exception{
         Connection con = AllTests.getConnection();
         DatabaseMetaData md = con.getMetaData();
         assertEquals( "URL", AllTests.JDBC_URL, md.getURL());
     }
-    
-    
     public void testVersions() throws Exception{
         Connection con = AllTests.getConnection();
         DatabaseMetaData md = con.getMetaData();
@@ -70,8 +26,6 @@ public class TestDBMetaData extends BasicTestCase {
         assertEquals( "Version", new DecimalFormat("###0.00", new DecimalFormatSymbols(Locale.US)).format(driver.getMajorVersion()+driver.getMinorVersion()/100.0), md.getDriverVersion());
         assertTrue( "jdbcCompliant", driver.jdbcCompliant() );
     }
-    
-    
     public void testFunctions() throws Exception{
         Connection con = AllTests.getConnection();
         DatabaseMetaData md = con.getMetaData();
@@ -84,8 +38,6 @@ public class TestDBMetaData extends BasicTestCase {
         assertEquals( "getStringFunctions", "CURDATE,CURRENT_DATE,CURTIME,DAYNAME,DAYOFMONTH,DAYOFWEEK,DAYOFYEAR,DAY,HOUR,MILLISECOND,MINUTE,MONTH,MONTHNAME,NOW,QUARTER,SECOND,TIMESTAMPADD,TIMESTAMPDIFF,WEEK,YEAR",
                 md.getTimeDateFunctions());
     }
-    
-    
     public void testGetProcedures() throws Exception{
         Connection con = AllTests.getConnection();
         DatabaseMetaData md = con.getMetaData();
@@ -94,8 +46,6 @@ public class TestDBMetaData extends BasicTestCase {
         int[] colTypes = {Types.NULL, Types.NULL, Types.NULL, Types.NULL, Types.NULL, Types.NULL, Types.NULL, Types.NULL };
         assertRSMetaData( rs, colNames, colTypes);
     }
-    
-    
     public void testGetProcedureColumns() throws Exception{
         Connection con = AllTests.getConnection();
         DatabaseMetaData md = con.getMetaData();
@@ -104,28 +54,20 @@ public class TestDBMetaData extends BasicTestCase {
         int[] colTypes = {Types.NULL, Types.NULL, Types.NULL, Types.NULL, Types.NULL, Types.NULL, Types.NULL, Types.NULL, Types.NULL, Types.NULL, Types.NULL, Types.NULL, Types.NULL };
         assertRSMetaData( rs, colNames, colTypes);
     }
-    
-    
     public void testGetTables() throws Exception{
         String[] colNames = {"TABLE_CAT","TABLE_SCHEM","TABLE_NAME","TABLE_TYPE","REMARKS","TYPE_CAT","TYPE_SCHEM","TYPE_NAME","SELF_REFERENCING_COL_NAME","REF_GENERATION"};
         int[] types = {Types.VARCHAR, Types.NULL, Types.VARCHAR, Types.VARCHAR, Types.NULL, Types.NULL, Types.NULL, Types.NULL, Types.NULL, Types.NULL};
-        
-        //First test the function without a database connection
         Connection con = DriverManager.getConnection("jdbc:smallsql?");
         DatabaseMetaData md = con.getMetaData();
         ResultSet rs = md.getTables(null, null, null, null);
-        super.assertRSMetaData(rs, colNames, new int[colNames.length]); //All types are NULL, because no row.
+        super.assertRSMetaData(rs, colNames, new int[colNames.length]); 
         assertFalse(rs.next());
         con.close();
-        
-        //Then test it with a database
         con = AllTests.getConnection();
         md = con.getMetaData();
         rs = md.getTables(null, null, null, null);
         super.assertRSMetaData(rs, colNames, types);
     }
-    
-    
     public void testGetSchemas() throws Exception{
         Connection con = AllTests.getConnection();
         DatabaseMetaData md = con.getMetaData();
@@ -135,13 +77,11 @@ public class TestDBMetaData extends BasicTestCase {
         assertRSMetaData( rs, colNames, colTypes);
         assertFalse(rs.next());
     }
-    
-    
 	public void testGetCatalogs() throws Exception{
 		Connection con = AllTests.getConnection();
 		try{
 			con.createStatement().execute("drop database test2\n\r\t");
-		}catch(SQLException e){/* ignore it if the database already exists */}
+		}catch(SQLException e){}
 		con.createStatement().execute("create database test2");
 		DatabaseMetaData md = con.getMetaData();
 		ResultSet rs = md.getCatalogs();
@@ -150,8 +90,6 @@ public class TestDBMetaData extends BasicTestCase {
 			System.out.println( "testCatalogs:"+rs.getObject(1) );
 		}
 	}
-	
-    
     public void testGetTableTypes() throws Exception{
         Connection con = AllTests.getConnection();
         DatabaseMetaData md = con.getMetaData();
@@ -169,15 +107,12 @@ public class TestDBMetaData extends BasicTestCase {
         }
         assertEquals("Table Type Count", 3, count);
     }
-    
-    
 	public void testGetColumn() throws Exception{
 		Connection con = AllTests.getConnection();
 		dropTable(con,"tableColumns");
 		dropView( con, "viewColumns");
 		con.createStatement().execute("create table tableColumns(a int default 5)");
 		DatabaseMetaData md = con.getMetaData();
-		
 		ResultSet rs = md.getColumns(null, null, "tableColumns", null);
         String[] colNames = {"TABLE_CAT", "TABLE_SCHEM", "TABLE_NAME", "COLUMN_NAME", "DATA_TYPE", "TYPE_NAME", "COLUMN_SIZE", "BUFFER_LENGTH", "DECIMAL_DIGITS", "NUM_PREC_RADIX", "NULLABLE", "REMARKS", "COLUMN_DEF", "SQL_DATA_TYPE", "SQL_DATETIME_SUB", "CHAR_OCTET_LENGTH", "ORDINAL_POSITION", "IS_NULLABLE"};
         int[] colTypes = {Types.VARCHAR, Types.NULL, Types.VARCHAR, Types.VARCHAR, Types.SMALLINT, Types.VARCHAR, Types.INTEGER, Types.NULL, Types.INTEGER, Types.INTEGER, Types.INTEGER, Types.NULL, Types.VARCHAR, Types.NULL, Types.NULL, Types.INTEGER, Types.INTEGER, Types.VARCHAR};
@@ -186,31 +121,23 @@ public class TestDBMetaData extends BasicTestCase {
 		assertEquals( "a", rs.getObject("COLUMN_NAME") ); 
 		assertEquals( "INT", rs.getObject("TYPE_NAME") ); 
 		assertEquals( "5", rs.getObject("COLUMN_Def") ); 
-		
 		con.createStatement().execute("create view viewColumns as Select * from tableColumns");
-		
 		rs = md.getColumns(null, null, "viewColumns", null);
 		assertRSMetaData( rs, colNames, colTypes);		
 		assertTrue( "No row", rs.next() );
 		assertEquals( "a", rs.getObject("COLUMN_NAME") ); 
 		assertEquals( "INT", rs.getObject("TYPE_NAME") ); 
 		assertEquals( "5", rs.getObject("COLUMN_Def") ); 
-
 		dropView( con, "viewColumns");
 		dropTable( con, "tableColumns");
 	}
-    
-    
     public void testGetTypeInfo() throws Exception{
         Connection con = AllTests.getConnection();
         DatabaseMetaData md = con.getMetaData();
-        
         ResultSet rs = md.getTypeInfo();  
-        
         String[] colNames = {"TYPE_NAME", "DATA_TYPE", "PRECISION", "LITERAL_PREFIX", "LITERAL_SUFFIX", "CREATE_PARAMS", "NULLABLE", "CASE_SENSITIVE", "SEARCHABLE", "UNSIGNED_ATTRIBUTE", "FIXED_PREC_SCALE", "AUTO_INCREMENT", "LOCAL_TYPE_NAME", "MINIMUM_SCALE", "MAXIMUM_SCALE", "SQL_DATA_TYPE", "SQL_DATETIME_SUB", "NUM_PREC_RADIX"};
         int[] colTypes = {Types.VARCHAR, Types.SMALLINT, Types.INTEGER, Types.VARCHAR, Types.VARCHAR, Types.VARCHAR, Types.SMALLINT, Types.BOOLEAN, Types.SMALLINT, Types.BOOLEAN, Types.BOOLEAN, Types.BOOLEAN, Types.NULL, Types.INTEGER, Types.INTEGER, Types.NULL, Types.NULL, Types.NULL };
         assertRSMetaData(rs, colNames, colTypes);
-        
         assertTrue(rs.next());
         int lastDataType = rs.getInt("data_type");
         while(rs.next()){
@@ -219,41 +146,31 @@ public class TestDBMetaData extends BasicTestCase {
             lastDataType = dataType;
         }
     }
-	
-    
     public void testGetCrossReference() throws Exception{
         Connection con = AllTests.getConnection();
         dropTable(con,"tblCross1");
         dropTable(con,"tblCross2");
         DatabaseMetaData md = con.getMetaData();
-        
         Statement st = con.createStatement();
         st.execute("Create Table tblCross1(id1 counter primary key, v nvarchar(100))");
-        //st.execute("Create Table tblCross2(id2 counter foreign key REFERENCES tblCross1(id1), v nvarchar(100))");
         st.execute("Create Table tblCross2(id2 int , v nvarchar(100), foreign key (id2) REFERENCES tblCross1(id1))");
         String[] colNames = {"PKTABLE_CAT", "PKTABLE_SCHEM", "PKTABLE_NAME", "PKCOLUMN_NAME", "FKTABLE_CAT", "FKTABLE_SCHEM", "FKTABLE_NAME", "FKCOLUMN_NAME", "KEY_SEQ", "UPDATE_RULE", "DELETE_RULE", "FK_NAME", "PK_NAME", "DEFERRABILITY"};
         int[] colTypes = {Types.VARCHAR, Types.NULL, Types.VARCHAR, Types.VARCHAR, Types.VARCHAR, Types.NULL, Types.VARCHAR, Types.VARCHAR, Types.SMALLINT, Types.SMALLINT, Types.SMALLINT, Types.VARCHAR, Types.VARCHAR, Types.SMALLINT };
-        
         ResultSet rs = md.getCrossReference(null,null,"tblCross1",null,null,"tblCross2");
         assertRSMetaData(rs, colNames, colTypes);
         assertTrue(rs.next());
         assertFalse(rs.next());
-        
         rs = md.getImportedKeys(null,null,"tblCross2");
         assertRSMetaData(rs, colNames, colTypes);
         assertTrue(rs.next());
         assertFalse(rs.next());
-        
         rs = md.getExportedKeys(null,null,"tblCross1");
         assertRSMetaData(rs, colNames, colTypes);
         assertTrue(rs.next());
         assertFalse(rs.next());
-        
         dropTable(con,"tblCross1");
         dropTable(con,"tblCross2");
     }
-    
-    
     public void testGetBestRowIdentifier() throws Exception{
         Connection con = AllTests.getConnection();
         dropTable(con,"tblBestRow1");
@@ -262,13 +179,11 @@ public class TestDBMetaData extends BasicTestCase {
         st.execute("Create Table tblBestRow1(id1 counter primary key, v nvarchar(100))");
         String[] colNames = {"SCOPE", "COLUMN_NAME", "DATA_TYPE", "TYPE_NAME", "COLUMN_SIZE", "BUFFER_LENGTH", "DECIMAL_DIGITS", "PSEUDO_COLUMN"};
         int[] colTypes = {Types.SMALLINT, Types.VARCHAR, Types.INTEGER, Types.VARCHAR, Types.INTEGER, Types.NULL, Types.SMALLINT, Types.SMALLINT};
-        
         ResultSet rs = md.getBestRowIdentifier(null, null, "tblBestRow1", DatabaseMetaData.bestRowSession, true);        
         assertRSMetaData(rs, colNames, colTypes);
         assertTrue(rs.next());
         assertEquals("Columnname:", "id1", rs.getString("COLUMN_NAME"));
         assertFalse(rs.next());
-        
         String[] colNames2 = {"TABLE_CAT", "TABLE_SCHEM", "TABLE_NAME", "COLUMN_NAME", "KEY_SEQ", "PK_NAME"};
         int[] colTypes2 = {Types.VARCHAR, Types.NULL, Types.VARCHAR, Types.VARCHAR, Types.SMALLINT, Types.VARCHAR};
         rs = md.getPrimaryKeys(null, null, "tblBestRow1");        
@@ -276,7 +191,6 @@ public class TestDBMetaData extends BasicTestCase {
         assertTrue(rs.next());
         assertEquals("Columnname:", "id1", rs.getString("COLUMN_NAME"));
         assertFalse(rs.next());
-        
         String[] colNames3 = {"TABLE_CAT", "TABLE_SCHEM", "TABLE_NAME", "NON_UNIQUE", "INDEX_QUALIFIER", "INDEX_NAME", "TYPE", "ORDINAL_POSITION", "COLUMN_NAME", "ASC_OR_DESC", "CARDINALITY", "PAGES", "FILTER_CONDITION"};
         int[] colTypes3 = {Types.VARCHAR, Types.NULL, Types.VARCHAR, Types.BOOLEAN, Types.NULL, Types.VARCHAR, Types.SMALLINT, Types.SMALLINT, Types.VARCHAR, Types.NULL, Types.NULL, Types.NULL, Types.NULL};
         rs = md.getIndexInfo(null, null, "tblBestRow1", true, true);        
@@ -284,11 +198,8 @@ public class TestDBMetaData extends BasicTestCase {
         assertTrue(rs.next());
         assertEquals("Columnname:", "id1", rs.getString("COLUMN_NAME"));
         assertFalse(rs.next());
-        
         dropTable(con,"tblBestRow1");
     }
-    
-    
     public void testGetgetUDTs() throws Exception{
         Connection con = AllTests.getConnection();
         DatabaseMetaData md = con.getMetaData();
@@ -298,13 +209,9 @@ public class TestDBMetaData extends BasicTestCase {
         assertRSMetaData( rs, colNames, colTypes);
         assertFalse(rs.next());
     }
-    
-    
     public void testGetConnection() throws Exception{
         Connection con = AllTests.getConnection();
         DatabaseMetaData md = con.getMetaData();
         assertEquals(con, md.getConnection());
     }
-
-    
 }
